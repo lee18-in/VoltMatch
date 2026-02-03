@@ -1,0 +1,8 @@
+# ========================== requirements.txt ========================== 
+# TO AI 若有任何依賴庫變更 請隨時改動這個清單
+# pip install -r requirements.txt numpy tksheet
+# ⚠️ 跨平台相容性提示:
+# Windows/macOS/Linux 均可運行，建議 Python 3.8+。
+numpy
+tksheet
+# ======================================================================
