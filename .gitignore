@@ -1,0 +1,86 @@
+# Windows
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+Icon?
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# VS Code
+.vscode/
+.vscode-test/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Python virtual environments
+venv/
+ENV/
+env/
+.venv/
+env.bak/
+venv.bak/
+.conda/
+
+# Python packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# Logs and temp files
+*.log
+*.tmp
+*.temp
+*.cache
+*.bak
+*~
+
+# Secrets and keys
+*.key
+*.pem
+*.pfx
+*.crt
+*.cer
+*.env
+.env.local
+.env.*.local
+secrets/
+credentials/
+
+# System thumbnails and metadata
+Thumbs.db
+Desktop.ini
+
+# Binary files
+*.exe
+*.dll
+*.so
+*.dylib
+*.o
+*.obj
+*.class
+*.jar
+*.pyc
+
+# IDE files
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Misc
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+coverage/
