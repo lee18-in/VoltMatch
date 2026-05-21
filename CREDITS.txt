@@ -1,7 +1,8 @@
 # ==============================================================================
-# VoltMatch - Voltage Divider Optimizer (Hotfix: tksheet font tuple)
+# VoltMatch - Voltage Divider Optimizer
 # ==============================================================================
 #
+# Version: 26.0129.1
 # Description:
 #   A professional tool for calculating resistor voltage dividers 
 #   with tolerance analysis and E24/E96 series selection.
@@ -18,9 +19,8 @@ This software (VoltMatch) utilizes the following open source libraries.
 We thank the developers and contributors of these projects.
 
 1. NumPy (BSD 3-Clause License)
-2. Pandas (BSD 3-Clause License)
-3. tksheet (MIT License)
-4. Python (Python Software Foundation License)
+2. tksheet (MIT License)
+3. Python (Python Software Foundation License)
 
 --------------------------------------------------------------------------------
 1. NumPy
@@ -57,42 +57,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
-2. Pandas
---------------------------------------------------------------------------------
-Copyright (c) 2008-2011, AQR Capital Management, LLC, Lambda Foundry, Inc. 
-and PyData Development Team.
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-
-    * Redistributions of source code must retain the above copyright
-       notice, this list of conditions and the following disclaimer.
-
-    * Redistributions in binary form must reproduce the above
-       copyright notice, this list of conditions and the following
-       disclaimer in the documentation and/or other materials provided
-       with the distribution.
-
-    * Neither the name of the copyright holder nor the names of any
-       contributors may be used to endorse or promote products derived
-       from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
---------------------------------------------------------------------------------
-3. tksheet
+2. tksheet
 --------------------------------------------------------------------------------
 Copyright (c) 2019-2024 ragardner
 
@@ -115,7 +80,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 --------------------------------------------------------------------------------
-4. Python
+3. Python
 --------------------------------------------------------------------------------
 This software uses Python. Python is a trademark of the Python Software Foundation.
 Copyright (c) 2001-2024 Python Software Foundation.
