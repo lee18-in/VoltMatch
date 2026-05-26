@@ -1,0 +1,38 @@
+Q :我這包是完全在windows上面寫的 我第一次要在zorin18 上開這包 幫我確認一下環境
+
+
+1. 安裝 Tkinter 系統套件
+
+```bash
+sudo apt update
+sudo apt install python3-tk
+```
+
+2. 安裝 Linux 中文字型 (對應你的程式碼)
+3. 
+你指定了預設使用「文泉驛微米黑 (WenQuanYi Micro Hei)」。Zorin OS 預設可能不會安裝這個字型，如果系統找不到，Tkinter 會隨機降級到系統預設字型，可能會導致中文字排版跑版或變得很醜。
+建議直接將這幾款字型安裝進 Zorin OS 中：
+
+```bash
+sudo apt install fonts-wqy-microhei fonts-noto-cjk
+```
+
+3. 建立虛擬環境與安裝依賴套件 (解決 PEP 668 限制)
+
+在較新的 Linux 發行版 (如 Zorin 18) 中，為了保護系統 Python 環境，通常會實施「PEP 668」規範，禁止你直接使用 pip install 安裝全域套件 (例如 numpy 和 tksheet)。 強烈建議你在專案資料夾底下建立一個虛擬環境：
+
+```bash
+# 1. 確保你有 python3-venv 套件
+sudo apt install python3-venv
+
+# 2. 在專案目錄下建立名為 .venv 的虛擬環境
+python3 -m venv .venv
+
+# 3. 啟動虛擬環境 (每次要跑程式前都要執行這行)
+source .venv/bin/activate
+
+# 4. 安裝你需要的第三方套件
+pip install numpy tksheet
+```
+
+
