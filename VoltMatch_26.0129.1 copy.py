@@ -77,8 +77,8 @@ def configure_system_settings(root):    # """ 系統相容性設定  根據作�
 
     if system_os == "Windows":  # Windows 特殊處理 DPI 問題 # 如果是 Windows 系統
         try: # 嘗試執行
-            from ctypes import windll # type: ignore # 引入 windll 模組 # 匯入 windll 以呼叫 Windows API
-            windll.shcore.SetProcessDpiAwareness(1) # type: ignore # 設定 DPI 覺察 # 設定程式感知 DPI，避免在高解析度螢幕模糊
+            from ctypes import windll   # 引入 windll 模組 # 匯入 windll 以呼叫 Windows API
+            windll.shcore.SetProcessDpiAwareness(1) # 設定 DPI 覺察 # 設定程式感知 DPI，避免在高解析度螢幕模糊
             default_font = ("Microsoft JhengHei", fontsize, "normal")   # 微軟正黑體 # 設定 Windows 下的預設字型為微軟正黑體
         except Exception: # 捕捉例外
             print("DPI Awareness set failed, utilizing default settings.")  # 錯誤處理 # 若設定失敗則印出訊息
@@ -536,8 +536,8 @@ class RVDSApp: # 定義主應用程式類別
         self.sheet.pack(fill="both", expand=True) # 放置試算表
         self.sheet.font(newfont=self.app_font) # 設定字型
         self.sheet.header_font(newfont=(self.app_font[0], fontsize, "bold")) # 設定標題字型
-        self.sheet.enable_bindings("single_select", "drag_select", "column_select", "row_select", "column_width_resize", "arrowkeys", "right_click_popup_menu", "rc_select", "copy") # 啟用綁定
-        self.sheet.extra_bindings([("rc_header", self.on_header_right_click)]) # type: ignore # 額外綁定右鍵選單
+        self.sheet.enable_bindings(("single_select", "drag_select", "column_select", "row_select", "column_width_resize", "arrowkeys", "right_click_popup_menu", "rc_select", "copy")) # 啟用綁定
+        self.sheet.extra_bindings([("rc_header", self.on_header_right_click)]) # 額外綁定右鍵選單
         self.sheet.popup_menu_add_command("Sort Ascending", self.sort_asc_from_cell) # 新增排序指令
         self.sheet.popup_menu_add_command("Sort Descending", self.sort_desc_from_cell) # 新增排序指令
         self.sheet.popup_menu_add_command("Filter", self.filter_from_cell) # 新增篩選指令
@@ -880,7 +880,6 @@ class RVDSApp: # 定義主應用程式類別
             current_tol = p['tol'] # 取得目前容差
             MAX_RETRY_LIMIT = 40 # 設定最大重試次數
             retry_count = 0 # 初始化重試計數
-            final_rows = [] # 初始化結果列表
             
             while retry_count < MAX_RETRY_LIMIT: # 迴圈重試
                 
