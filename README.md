@@ -1,72 +1,77 @@
-# VoltMatch
-VoltMatch
-# ⚡ VoltMatch - Voltage Divider Optimizer
+# ⚡ VoltMatch
 
-**Author:** lee18.in  
-**Version:** 26.0129.1  
+**A Professional Voltage Divider Optimizer for Hardware Engineers**
 
-## 📖 關於 VoltMatch
-VoltMatch 是一款專為硬體工程師與電子愛好者設計的**圖形化分壓電阻最佳化工具**。
+## 📖 About VoltMatch
 
-不同於一般僅提供「單一最佳解」的計算機，VoltMatch 的核心設計理念是：**「在容許的誤差範圍內，窮舉算出所有可能的電阻組合」**。這讓工程師在實際選料時，可以根據手邊現有的庫存或是成本考量，擁有最大的彈性來選擇最合適的標準電阻。
+VoltMatch is a graphical voltage divider optimization tool designed for hardware engineers and electronics enthusiasts.
 
----
+Unlike conventional calculators that only provide a "single best solution," VoltMatch's core design philosophy is to **exhaustively calculate all possible resistor combinations within an allowable tolerance range**. This approach gives engineers maximum flexibility to choose the most suitable standard components based on actual inventory, cost constraints, and specific application requirements.
 
-## ✨ 核心特色
+## ✨ Core Features
 
-- **🔍 全面窮舉演算法**  
-  計算並列出所有符合條件的解。當搜尋無解時，演算法會**自動智慧放寬容差 (Auto-Relaxing Tolerance)**，直到找到可行組合，並透過視覺化滑塊動態呈現。
-- **📊 豐富的標準電阻庫支援**  
-  內建 **E24 (5%)** 與 **E96 (1%)** 標準電阻系列，並可針對 High Side (高側) 或 Low Side (低側) 獨立限制「僅使用 E24 常用電阻」。
-- **⚡ 雙電阻架構支援**  
-  高側電阻支援 **單顆 (R1)** 或 **雙顆串聯 (R1 + R2)** 模式，以應對需要更高精準度或特殊分壓比例的應用場景。
-- **🔄 緊湊型反向求解器 (Compact Solver)**  
-  獨立的「Reverse Calc」小工具，只要鎖定 V_Out、R_High、V_Ref 或 R_Low 其中三個參數，即可瞬間反推剩下的未知數，並與主介面即時同步。
-- **📈 進階資料表檢視**  
-  結合 `tksheet` 套件，提供類似 Excel 的強大資料表功能。支援多欄位排序、右鍵篩選 (Filter)、熱鍵複製，並以漸層顏色直觀標示誤差與 E24 匹配數量。
-- **🚀 多執行緒非同步運算**  
-  核心採用 NumPy 進行高效能向量化運算，並透過背景執行緒 (Threading) 搭配 Queue 處理，確保在龐大運算量下 UI 介面依然順暢不卡頓。
-- **🎨 動態電路圖與筆記區**  
-  根據目前的設定參數，即時繪製 ANSI 鋸齒風格 (Zigzag Style) 電路圖；內建快速筆記本 (Notes) 方便紀錄開發靈感或暫存最佳組合。
+- 🔍 **Exhaustive Search Algorithm**: Calculates and lists all feasible solutions. Features an Auto-Relaxing Tolerance mechanism to guarantee results even under strict constraints.
+- 📊 **Standard Resistor Libraries**: Built-in E24 (5%) and E96 (1%) series support, with independent options to restrict High/Low sides to E24 only.
+- ⚡ **Dual-Resistor Architecture**: Supports both Single (R1) and Dual (R1 + R2) modes for the High Side resistor to handle edge-case ratios.
+- 🔄 **Quick Solver**: A compact reverse calculator to instantly derive any unknown parameter by locking the other three variables.
+- 📈 **Advanced Data Grid**: Excel-like table capabilities powered by `tksheet` featuring multi-column sorting, right-click filtering, and color-coded error gradients.
+- 🚀 **Asynchronous Multi-threading**: High-performance vectorized operations utilizing NumPy, running in background threads to keep the UI completely responsive.
+- 🎨 **Dynamic Schematics & Notes**: Real-time ANSI Zigzag style circuit rendering alongside a built-in notepad for quick documentation.
 
----
+## 🚀 Installation & Setup
 
-## 📦 系統需求與依賴套件
+VoltMatch requires **Python 3.x**.
 
-請確保您的開發環境已安裝 **Python 3.x**，並具備以下第三方套件：
+### Linux Deployment (e.g., Ubuntu / Zorin OS)
+
+1. Install Tkinter system package:
+
+```bash
+sudo apt update
+sudo apt install python3-tk
+```
+
+1. Install Chinese fonts (Optional but recommended for UI rendering):
+
+```bash
+sudo apt install fonts-wqy-microhei fonts-noto-cjk
+```
+
+1. Setup Virtual Environment & Install Dependencies (PEP 668 compliance):
+
+```bash
+sudo apt install python3-venv
+python3 -m venv .venv
+source .venv/bin/activate
+pip install numpy tksheet
+```
+
+### Windows Deployment
+
+1. Ensure Python 3.x is installed from python.org.
+
+1. Open Command Prompt or PowerShell and install dependencies (`tkinter` is usually built-in on Windows):
 
 ```bash
 pip install numpy tksheet
 ```
-*(註：`tkinter` 通常已內建於標準 Python 安裝中，無須額外下載。)*
 
----
+## 💡 Usage Guide
 
-## 🚀 如何使用
+1. **Target Voltage:** Enter your desired `V_Out` and set the maximum allowable error tolerance using the slider or input box.
+2. **High Side Resistor:** Choose between Single or Dual resistor mode, and optionally toggle the E24 restriction.
+3. **Reference Voltage:** Enter the system's feedback reference voltage `V_Ref` (e.g., 3.3V, 1.25V).
+4. **Low Side Resistor:** Choose to let the program automatically `Sweep` (search) or lock it to a `Fixed Value`.
+5. **Calculate:** Click `5. Calculate` to initiate the background search. Once finished, right-click the grid headers or cells to filter and sort the results.
+6. **Export:** Click `Export CSV` to export the filtered result list for BOM generation or engineering reports.
 
-1. **設定目標電壓 (Target Voltage):**  
-   輸入您期望的 V_Out，並透過滑桿或輸入框設定最大允許的誤差容忍度 (Tolerance %)。
-2. **設定高側電阻 (High Side Resistor):**  
-   選擇使用單顆電阻 (Single) 或雙顆電阻 (Dual)，並決定是否僅限使用 E24 規格。
-3. **設定參考電壓 (Reference Voltage):**  
-   輸入系統的 V_Ref 基準電壓 (例如 3.3V)。
-4. **設定低側電阻 (Low Side Resistor):**  
-   選擇讓程式自動掃描 (Sweep)，或者鎖定在特定阻值 (Fixed Value)。
-5. **執行計算 (Calculate):**  
-   點擊 `5. Calculate` 按鈕，程式將在背景尋找所有組合。尋找完畢後可透過右鍵對表格資料進行篩選或排序。
-6. **匯出資料 (Export CSV):**  
-   點擊 `Export CSV`，將滿意的結果清單完整匯出，便於後續報告製作或採購 BOM 表整理。
+## 📦 Packaging Notes
 
----
+If you intend to bundle this application into a standalone executable using tools like **PyInstaller** or **Nuitka**, please ensure that the `CREDITS.txt` file is placed in the same directory as the executable (or properly bundled into the resource path). Otherwise, the "About" window may fail to display the correct developer and open-source acknowledgments.
 
-## 🛠️ 打包與發佈注意事項
+## 📜 License & Credits
 
-如果您使用 PyInstaller 或 Nuitka 等工具對本程式進行打包，**請務必將 `CREDITS.txt` 檔案與執行檔放在同一層目錄 (或依照您的打包設定包裝進去)**，否則 About 視窗可能會無法正常讀取開發者與授權資訊。
+- **Author:** Andy Lee (lee18.in)
+- **License:** MIT License
 
----
-
-## 📜 授權與版權
-
-- **Author:** lee18.in
-- 本軟體基於「算出所有可能性，排除極限優化(如二分搜尋)」的憲法等級限制設計。
-- 詳細貢獻者與第三方庫聲明請參閱 `CREDITS.txt`。
+This project utilizes several awesome open-source libraries. For detailed acknowledgments and third-party licenses, please refer to the `CREDITS.txt` file included in this repository.
