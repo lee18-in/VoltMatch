@@ -50,8 +50,8 @@ class FilterWindow(tk.Toplevel): # 定義篩選視窗類別，繼承自 Toplevel
         self.result = current_filter if current_filter is not None else set(unique_values) # 設定目前的篩選結果
         self.font_style = font_style # 儲存字型樣式
         
-        display_limit = 1000 # [FIX] 定義顯示限制，避免未定義變數錯誤
-        if len(unique_values) > display_limit: # 檢查是否超過顯示限制 (注意：display_limit 在此處未定義，可能會報錯，除非是全域變數)
+        display_limit = 1000 # 定義顯示限制
+        if len(unique_values) > display_limit: # 檢查是否超過顯示限制
             messagebox.showwarning("Display Limit", f"[{col_name}] Too much data; only the first {display_limit} records are displayed.") # 顯示警告
             unique_values = unique_values[:display_limit] # 截斷資料
 
@@ -146,7 +146,7 @@ class CompactSolverFrame(ttk.Frame):
 
     def create_widgets(self):
         # [緊湊化] 使用 LabelFrame 直接做為容器，自帶標題
-        self.main_frame = ttk.LabelFrame(self, text="⚡ Reverse Calc", padding=2)
+        self.main_frame = ttk.LabelFrame(self, text="⚡ Quick Solver", padding=2)
         self.main_frame.pack(fill="both", expand=True, padx=0, pady=0)
         
         # [緊湊化] 欄位設定
