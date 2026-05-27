@@ -88,13 +88,7 @@ def worker_calculation(p, msg_queue): # 背景計算函數
                         valid_rlow.append(np.full(len(idxs), rl)) # 加入對應的 R_Low
             
             # --- 無解處理 (放寬 - 滑塊會往右跳) ---
-            is_no_solution = False # 初始化無解旗標
-            if isinstance(valid_idx, list): # 若為列表
-                if not valid_idx: is_no_solution = True # 若為空則設為無解
-            elif isinstance(valid_idx, np.ndarray): # 若為陣列
-                if valid_idx.size == 0: is_no_solution = True # 若大小為 0 則設為無解
-
-            if is_no_solution:  # 進入無解處理邏輯：當前容差範圍內找不到任何組合 # 若無解
+            if not valid_idx:  # 進入無解處理邏輯：當前容差範圍內找不到任何組合 # 若無解
                 if current_tol >= config.MAX_TOLERANCE: # 檢查是否已達到系統設定的最大容差上限 (例如 3%) # 若已達最大容差
                     msg_queue.put(("error", f"No solution found within max tolerance ({config.MAX_TOLERANCE}%).")) # 回報錯誤給主介面並終止 # 發送錯誤訊息
                     return # 結束函數

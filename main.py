@@ -7,16 +7,12 @@
 
 # === 1. 作業系統與系統環境相關 (OS / System) ===
 import os          # 匯入 os 模組，用於操作系統路徑與環境變數處理
-import sys         # 匯入 sys 模組，用於取得系統參數與執行環境資訊
-import platform    # 匯入 platform 模組，用於偵測作業系統資訊
 
 # === 2. Python 內建標準函式庫 (Standard Library) ===
 import csv         # 匯入 csv 模組，用於讀寫 CSV 檔案
-import math        # 匯入 math 模組，用於數學運算 (如 log, floor 等)
 import traceback   # 匯入 traceback 模組，用於捕捉並列印錯誤堆疊資訊
 import threading   # 匯入 threading 模組，用於多執行緒處理 (避免介面卡死)
 import queue       # 匯入 queue 模組，用於執行緒間的訊息傳遞
-import time        # 匯入 time 模組，用於時間延遲與計時
 
 # === 3. Python 內建 GUI 函式庫 (Tkinter) ===
 import tkinter as tk               # 匯入 tkinter 模組並別名為 tk，用於建立 GUI 圖形介面
@@ -25,7 +21,6 @@ from tkinter import messagebox     # 從 tkinter 匯入 messagebox，用於顯�
 from tkinter import filedialog     # 從 tkinter 匯入 filedialog，用於檔案選取對話框
 
 # === 4. 第三方外部套件 (Third-Party Packages, 需 pip install) ===
-import numpy as np                 # 匯入 numpy 模組並別名為 np，用於高效能數值運算
 from tksheet import Sheet          # 從 tksheet 匯入 Sheet，用於顯示試算表格式資料
 
 # =================== [MODULARIZATION] =====================
@@ -85,7 +80,7 @@ class RVDSApp: # 定義主應用程式類別
         
         self.active_filters = {} # 初始化篩選器狀態
         self.sort_state = {} # 初始化排序狀態
-        self.base_headers = ["R_Low", "R_Hi1", "R_Hi2", "V_Out", "Error %", "E24 Count"] # 定義表格標題
+        self.base_headers = ["R_Low", "R_Hi1", "R_Hi2", "V_Out", "Dev %", "E24 Count"] # 定義表格標題
 
         # 監聽數值變動，確保手動輸入或程式自動放寬時，滑桿也會跟著動
         self.tolerance.trace_add("write", self._sync_slider_from_val) # 綁定容差變動事件
@@ -235,9 +230,8 @@ class RVDSApp: # 定義主應用程式類別
         self.sheet.font(newfont=self.app_font) # 設定字型
         self.sheet.header_font(newfont=(self.app_font[0], config.FONTSIZE, "bold")) # 設定標題字型
         self.sheet.enable_bindings("single_select", "drag_select", "column_select", "row_select", "column_width_resize", "arrowkeys", "right_click_popup_menu", "rc_select", "copy") # 啟用綁定
-        self.sheet.extra_bindings([("rc_header", self.on_header_right_click)]) # type: ignore # 額外綁定右鍵選單
-        self.sheet.popup_menu_add_command("Sort Ascending", self.sort_asc_from_cell) # 新增排序指令
-        self.sheet.popup_menu_add_command("Sort Descending", self.sort_desc_from_cell) # 新增排序指令
+        self.sheet.popup_menu_add_command("A>Z Sort Ascending", self.sort_asc_from_cell) # 新增排序指令
+        self.sheet.popup_menu_add_command("Z>A Sort Descending", self.sort_desc_from_cell) # 新增排序指令
         self.sheet.popup_menu_add_command("Filter", self.filter_from_cell) # 新增篩選指令
         self.sheet.popup_menu_add_command("Clear Filter", self.clear_filter_from_cell) # 新增清除篩選指令
 
@@ -257,7 +251,7 @@ class RVDSApp: # 定義主應用程式類別
         self.compact_solver.pack(side=tk.LEFT, padx=(0, 5), fill="y", expand=False)
 
         # 2. Notes (Right)
-        notepad_frame = ttk.LabelFrame(bottom_area, text="📝 Notes", padding=5) # 建立筆記框架
+        notepad_frame = ttk.LabelFrame(bottom_area, text="📝 Notes (Right-click to paste)", padding=5) # 建立筆記框架
         notepad_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True) # 放置框架
         
         note_scroll = ttk.Scrollbar(notepad_frame) # 建立捲軸
@@ -267,7 +261,7 @@ class RVDSApp: # 定義主應用程式類別
         self.notepad.pack(side=tk.LEFT, fill=tk.BOTH, expand=True) # 放置文字區域
         
         # [UI] 預填表格標題至筆記區
-        self.notepad.insert("1.0", "R_Low	R_Hi1	R_Hi2	V_Out" + "		%      E24" + "\n")
+        self.notepad.insert("1.0", "R_Low	R_Hi1	R_Hi2	V_Out" + "	      Deviation%   E24" + "\n")
         
         self.notepad.config(yscrollcommand=note_scroll.set) # 設定捲軸指令
         note_scroll.config(command=self.notepad.yview) # 設定捲軸控制
@@ -536,34 +530,6 @@ class RVDSApp: # 定義主應用程式類別
         
         self.update_sheet_display() # 更新表格顯示
 
-    # 右鍵選單相關功能
-    def on_header_right_click(self, event): # 標題右鍵點擊事件處理
-        try: # 嘗試執行
-            if isinstance(event, int): col_idx = event # 若事件為整數 (索引)
-            elif isinstance(event, (list, tuple)): col_idx = event[0] # 若事件為列表或元組
-            else: return # 否則返回
-            self.open_header_menu(col_idx) # 開啟標題選單
-        except Exception: # 忽略錯誤
-            pass # 不做任何事
-
-    def open_header_menu(self, col_idx): # 開啟標題選單函數
-        if not self.data_rows: return # 若無資料則返回
-        col_name = self.base_headers[col_idx] # 取得欄位名稱
-        
-        menu = tk.Menu(self.root, tearoff=0) # 建立選單
-        menu.add_command(label=f"【{col_name}】", state="disabled") # 加入標題標籤
-        menu.add_separator() # 加入分隔線
-        menu.add_command(label="Sort Ascending", command=lambda: self.manual_sort(col_idx, 'asc')) # 加入升冪排序指令
-        menu.add_command(label="Sort Descending", command=lambda: self.manual_sort(col_idx, 'desc')) # 加入降冪排序指令
-        
-        if col_name not in ["V_Out", "Error %"]: # 若非輸出電壓或誤差欄位
-            menu.add_separator() # 加入分隔線
-            menu.add_command(label="Filter", command=lambda: self.open_filter_popup(col_idx)) # 加入篩選指令
-            menu.add_command(label="Clear Filter", command=lambda: self.clear_filter(col_idx)) # 加入清除篩選指令
-            
-        x, y = self.root.winfo_pointerxy() # 取得滑鼠座標
-        menu.post(x, y) # 顯示選單
-
     def manual_sort(self, col_idx, order): # 手動排序函數
         self.sort_state[col_idx] = 'desc' if order == 'asc' else 'asc' # 更新排序狀態
         self.perform_sort(col_idx) # 執行排序
@@ -577,7 +543,7 @@ class RVDSApp: # 定義主應用程式類別
         col_idx = self.get_selected_col() # 取得選取欄位
         if col_idx is not None: # 若有選取
             col_name = self.base_headers[col_idx] # 取得欄位名稱
-            if col_name in ["V_Out", "Error %"]: return # 若為不可篩選欄位則返回
+            if col_name in ["V_Out", "Dev %"]: return # 若為不可篩選欄位則返回
             self.open_filter_popup(col_idx) # 開啟篩選視窗
     def sort_asc_from_cell(self, *args): # 從儲存格升冪排序函數
         col_idx = self.get_selected_col() # 取得選取欄位
