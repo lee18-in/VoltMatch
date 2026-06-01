@@ -33,8 +33,6 @@ def worker_calculation(p, msg_queue): # 背景計算函數
         
         if p['r_hi_mode'] == "Disable": # 若 R_Hi2 停用
             r_hi2_rng = np.array([0.0]) # 設定為 0
-        elif p['r_hi_mode'] == "Locked": # 若 R_Hi2 鎖定
-            r_hi2_rng = np.array([p['r_hi_lock']]) # 設定為鎖定值
         else: # 若為掃描模式
             r_hi2_rng = r_all[(r_all >= p['r_hi_min']) & (r_all <= p['r_hi_max'])] # 篩選 R_Hi2 範圍
             if p['r_hi2_e24']: # 若限制 E24
