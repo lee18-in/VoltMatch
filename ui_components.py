@@ -50,10 +50,9 @@ class FilterWindow(tk.Toplevel): # 定義篩選視窗類別，繼承自 Toplevel
         self.result = current_filter if current_filter is not None else set(unique_values) # 設定目前的篩選結果
         self.font_style = font_style # 儲存字型樣式
         
-        display_limit = 1000 # 定義顯示限制
-        if len(unique_values) > display_limit: # 檢查是否超過顯示限制
-            messagebox.showwarning("Display Limit", f"[{col_name}] Too much data; only the first {display_limit} records are displayed.") # 顯示警告
-            unique_values = unique_values[:display_limit] # 截斷資料
+        if len(unique_values) > config.FILTER_DISPLAY_LIMIT: # 檢查是否超過顯示限制
+            messagebox.showwarning("Display Limit", f"[{col_name}] Too much data; only the first {config.FILTER_DISPLAY_LIMIT} records are displayed.") # 顯示警告
+            unique_values = unique_values[:config.FILTER_DISPLAY_LIMIT] # 截斷資料
 
         try: # 嘗試排序
             def sort_key(x): # 定義排序鍵值函數
@@ -131,11 +130,11 @@ class CompactSolverFrame(ttk.LabelFrame):
         self.f_bold = ("Microsoft JhengHei", config.FONTSIZE, "bold")
         
         # 變數定義
-        self.sv_low = tk.StringVar(value="100")
-        self.sv_vfb = tk.StringVar(value="3.3")
-        self.sv_hi  = tk.StringVar(value="2382.42")
-        self.sv_vout= tk.StringVar(value="81.92")
-        self.target_mode = tk.StringVar(value="hi") 
+        self.sv_low = tk.StringVar(value=config.DEFAULT_SOLVER_LOW)
+        self.sv_vfb = tk.StringVar(value=str(config.DEFAULT_V_REF))
+        self.sv_hi  = tk.StringVar(value=config.DEFAULT_SOLVER_HI)
+        self.sv_vout= tk.StringVar(value=str(config.DEFAULT_V_TARGET))
+        self.target_mode = tk.StringVar(value=config.DEFAULT_SOLVER_TARGET) 
         
         # 綁定事件
         for sv in [self.sv_low, self.sv_vfb, self.sv_hi, self.sv_vout]:
@@ -314,7 +313,8 @@ class NotesFrame(ttk.LabelFrame):
         self.text_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # [UI] 預填表格標題至筆記區
-        self.text_widget.insert("1.0", "R_Low\tR_Hi1\tR_Hi2\tV_Out\tDeviation%\tE24\n")
+        header_str = "\t".join(config.SHEET_BASE_HEADERS) + "\n"
+        self.text_widget.insert("1.0", header_str)
         
         self.text_widget.config(yscrollcommand=note_scroll.set)
         note_scroll.config(command=self.text_widget.yview)

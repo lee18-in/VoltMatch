@@ -23,6 +23,39 @@ MAX_TOLERANCE = 5       # 最大容差限制 %
 MIN_TOLERANCE = 0.00001 # 最小容差限制 %
 WINDOWS_SIZE = "1100x720" # 主視窗
 
+# UI 預設參數
+DEFAULT_V_REF = 3.3       # 預設參考電壓
+DEFAULT_V_TARGET = 81.92  # 預設目標電壓
+DEFAULT_TOLERANCE = "0.5" # 預設容差
+
+DEFAULT_DISPLAY_LIMIT = 100 # 顯示限制：最多顯示前 100 組結果
+DEFAULT_LIMIT_MIN = 10      # 最小限制：至少顯示 10 組結果
+DEFAULT_LIMIT_MAX = 1000    # 最大限制：最多顯示 1000 組結果  「Max Results」滑桿
+FILTER_DISPLAY_LIMIT = 1000 # 顯示過濾限制：當結果超過此數量時，啟用過濾機制  選器選項的數量上限
+
+DEFAULT_R_LOW_MODE = "Unlock"       # 預設 R_Low 模式
+DEFAULT_R_LOW_LOCK_VAL = 10000.0    # 預設 R_Low 鎖定值 (當 R_Low 模式為 "Lock" 時使用)
+DEFAULT_R_LOW_MIN = 1000.0          # 預設 R_Low 最小值
+DEFAULT_R_LOW_MAX = 1000000.0       # 預設 R_Low 最大值
+
+DEFAULT_R_HI_MODE = "Unlock"    # 預設 R_Hi 模式
+DEFAULT_R_HI_MIN = 0.0          # 預設 R_Hi 最小值
+DEFAULT_R_HI_MAX = 1000000.0    # 預設 R_Hi 最大值
+
+# 試算表設定 (Sheet Settings)
+SHEET_BASE_HEADERS = ["R_Low", "R_Hi1", "R_Hi2", "V_Out", "Dev %", "E24"]   # 試算表標題列
+SHEET_COLUMN_WIDTHS = (68.0, 68.0, 68.0, 98.0, 72.0, 52.0)                  # 試算表各欄寬度
+SHEET_INDEX_WIDTH = 42                                                      # 試算表索引欄寬度                
+
+# 緊湊型求解器預設值 (Compact Solver)
+DEFAULT_SOLVER_LOW = "100"          # 預設 R_Low 值
+DEFAULT_SOLVER_HI = "2382.42"       # 預設 R_Hi 值
+DEFAULT_SOLVER_TARGET = "hi"        
+
+# 背景運算常數 (Calculation Worker)
+WORKER_MAX_RETRY = 40               # 最大重試次數：當運算過程中發生錯誤時，最多重試的次數
+WORKER_CHUNK_SIZE = 500             # 運算分塊大小：每次運算處理的組合數量，過大可能導致 UI 卡頓，過小可能增加總運算時間
+
 # 標準電阻表
 E96_BASE = [
     1.00, 1.02, 1.05, 1.07, 1.10, 1.13, 1.15, 1.18, 1.21, 1.24, 1.27, 1.30, 1.33, 1.37, 

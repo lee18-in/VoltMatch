@@ -45,9 +45,9 @@ class RVDSApp: # 定義主應用程式類別
         # [Threading] 初始化 Queue
         self.msg_queue = queue.Queue() # 建立訊息佇列
 
-        self.v_ref = tk.DoubleVar(value=3.3) # 初始化參考電壓變數
-        self.v_target = tk.DoubleVar(value=81.92) # 初始化目標電壓變數
-        self.tolerance = tk.StringVar(value="0.5") # 初始化容差變數
+        self.v_ref = tk.DoubleVar(value=config.DEFAULT_V_REF) # 初始化參考電壓變數
+        self.v_target = tk.DoubleVar(value=config.DEFAULT_V_TARGET) # 初始化目標電壓變數
+        self.tolerance = tk.StringVar(value=config.DEFAULT_TOLERANCE) # 初始化容差變數
         
         # [Non-Linear Scale] 建立滑桿專用的虛擬變數 (0.0 ~ 1.0)
         self.tol_slider_var = tk.DoubleVar() # 初始化滑桿變數
@@ -55,17 +55,22 @@ class RVDSApp: # 定義主應用程式類別
         init_s = ((0.5 - config.MIN_TOLERANCE) / (config.MAX_TOLERANCE - config.MIN_TOLERANCE)) ** (1/5) # 計算初始滑桿位置
         self.tol_slider_var.set(init_s) # 設定滑桿位置
 
-        self.var_display_limit = tk.IntVar(value=100) # 初始化顯示數量限制變數
+        self.var_display_limit = tk.IntVar(value=config.DEFAULT_DISPLAY_LIMIT) # 初始化顯示數量限制變數
         
-        self.r_low_mode = tk.StringVar(value="Unlock") # 初始化 R_Low 模式變數
-        self.r_low_lock_val = tk.DoubleVar(value=10000) # 初始化 R_Low 鎖定值
-        self.r_low_min = tk.DoubleVar(value=1000) # 初始化 R_Low 最小值
-        self.r_low_max = tk.DoubleVar(value=1000000) # 初始化 R_Low 最大值
+        # [Non-Linear Scale] 建立顯示限制滑桿專用的虛擬變數 (0.0 ~ 1.0)
+        self.limit_slider_var = tk.DoubleVar() # 初始化限制滑桿變數
+        init_lim_s = ((config.DEFAULT_DISPLAY_LIMIT - config.DEFAULT_LIMIT_MIN) / (config.DEFAULT_LIMIT_MAX - config.DEFAULT_LIMIT_MIN)) ** (1/5) # 計算初始限制滑桿位置
+        self.limit_slider_var.set(init_lim_s) # 設定滑桿位置
+        
+        self.r_low_mode = tk.StringVar(value=config.DEFAULT_R_LOW_MODE) # 初始化 R_Low 模式變數
+        self.r_low_lock_val = tk.DoubleVar(value=config.DEFAULT_R_LOW_LOCK_VAL) # 初始化 R_Low 鎖定值
+        self.r_low_min = tk.DoubleVar(value=config.DEFAULT_R_LOW_MIN) # 初始化 R_Low 最小值
+        self.r_low_max = tk.DoubleVar(value=config.DEFAULT_R_LOW_MAX) # 初始化 R_Low 最大值
         self.r_low_e24_only = tk.BooleanVar(value=False) # 初始化 R_Low E24 限制變數
 
-        self.r_hi_mode = tk.StringVar(value="Unlock") # 初始化 R_Hi 模式變數
-        self.r_hi_min = tk.DoubleVar(value=0) # 初始化 R_Hi 最小值
-        self.r_hi_max = tk.DoubleVar(value=1000000) # 初始化 R_Hi 最大值
+        self.r_hi_mode = tk.StringVar(value=config.DEFAULT_R_HI_MODE) # 初始化 R_Hi 模式變數
+        self.r_hi_min = tk.DoubleVar(value=config.DEFAULT_R_HI_MIN) # 初始化 R_Hi 最小值
+        self.r_hi_max = tk.DoubleVar(value=config.DEFAULT_R_HI_MAX) # 初始化 R_Hi 最大值
         self.r_hi1_e24_only = tk.BooleanVar(value=False) # 初始化 R_Hi1 E24 限制變數
         self.r_hi2_e24_only = tk.BooleanVar(value=False) # 初始化 R_Hi2 E24 限制變數
 
@@ -74,9 +79,9 @@ class RVDSApp: # 定義主應用程式類別
         
         self.active_filters = {} # 初始化篩選器狀態
         self.sort_state = {} # 初始化排序狀態
-        self.base_headers = ["R_Low", "R_Hi1", "R_Hi2", "V_Out", "Dev %", "E24"] # 定義表格標題
-        self.sheet_column_widths = (68.0, 68.0, 68.0, 98.0, 72.0, 52.0) # 定義緊湊欄寬，避免底部水平捲軸
-        self.sheet_index_width = 42 # 定義左側行號欄寬
+        self.base_headers = config.SHEET_BASE_HEADERS # 定義表格標題
+        self.sheet_column_widths = config.SHEET_COLUMN_WIDTHS # 定義緊湊欄寬，避免底部水平捲軸
+        self.sheet_index_width = config.SHEET_INDEX_WIDTH # 定義左側行號欄寬
 
         # 監聽數值變動，確保手動輸入或程式自動放寬時，滑桿也會跟著動
         self.tolerance.trace_add("write", self._sync_slider_from_val) # 綁定容差變動事件
@@ -123,25 +128,33 @@ class RVDSApp: # 定義主應用程式類別
         lim_frame.pack(fill=tk.X, pady=2) # 放置框架
         ttk.Label(lim_frame, text="Max Results:", foreground=self.ui_colors["target"]).pack(side=tk.LEFT) # 建立最大結果標籤
 
-        def on_slider_move(val): # 滑桿移動回調函數
+        def on_limit_slider_move(val): # 滑桿移動回調函數 (非線性)
             try: # 嘗試處理
-                f_val = float(val) # 轉為浮點數
-                snapped_val = int(round(f_val / 10) * 10) # 取整到最近的 10
+                s = float(val) # 轉為 0.0 ~ 1.0 的浮點數
+                raw_val = config.DEFAULT_LIMIT_MIN + (config.DEFAULT_LIMIT_MAX - config.DEFAULT_LIMIT_MIN) * (s ** 5) # 5次方非線性映射
+                
+                # 根據數量級動態調整刻度 (Snap)
+                if raw_val <= 100: snapped_val = int(round(raw_val / 10) * 10)
+                elif raw_val <= 1000: snapped_val = int(round(raw_val / 50) * 50)
+                elif raw_val <= 10000: snapped_val = int(round(raw_val / 500) * 500)
+                else: snapped_val = int(round(raw_val / 5000) * 5000)
+                    
+                snapped_val = max(config.DEFAULT_LIMIT_MIN, min(config.DEFAULT_LIMIT_MAX, snapped_val))
                 if self.var_display_limit.get() != snapped_val: # 若值改變
                     self.var_display_limit.set(snapped_val) # 更新變數
             except: pass # 忽略錯誤
 
         limit_scale = ttk.Scale( # 建立限制滑桿
             lim_frame, # 父容器
-            from_= 10, # 最小值
-            to= 1000 , # 最大值
+            from_=0.0, # 最小值
+            to=1.0, # 最大值
+            variable=self.limit_slider_var, # 綁定虛擬變數
             orient='horizontal', # 水平方向
-            command=on_slider_move # 綁定回調函數
+            command=on_limit_slider_move # 綁定回調函數
         )
-        limit_scale.set(100) # 設定預設值
         limit_scale.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=2) # 放置滑桿
         
-        ttk.Label(lim_frame, textvariable=self.var_display_limit, width=5, font=self.app_font, anchor="center", foreground=self.ui_colors["target"]).pack(side=tk.LEFT) # 顯示目前限制值
+        ttk.Label(lim_frame, textvariable=self.var_display_limit, width=4, font=self.app_font, anchor="center", foreground=self.ui_colors["target"]).pack(side=tk.LEFT) # 顯示目前限制值
         
         # ==============
         # 2. High Side Resistor (Orange)
