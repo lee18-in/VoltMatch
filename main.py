@@ -74,7 +74,9 @@ class RVDSApp: # 定義主應用程式類別
         
         self.active_filters = {} # 初始化篩選器狀態
         self.sort_state = {} # 初始化排序狀態
-        self.base_headers = ["R_Low", "R_Hi1", "R_Hi2", "V_Out", "Dev %", "E24 Count"] # 定義表格標題
+        self.base_headers = ["R_Low", "R_Hi1", "R_Hi2", "V_Out", "Dev %", "E24"] # 定義表格標題
+        self.sheet_column_widths = (68.0, 68.0, 68.0, 98.0, 72.0, 52.0) # 定義緊湊欄寬，避免底部水平捲軸
+        self.sheet_index_width = 42 # 定義左側行號欄寬
 
         # 監聽數值變動，確保手動輸入或程式自動放寬時，滑桿也會跟著動
         self.tolerance.trace_add("write", self._sync_slider_from_val) # 綁定容差變動事件
@@ -206,13 +208,13 @@ class RVDSApp: # 定義主應用程式類別
         self.status_label = ttk.Label(left_frame, text="Ready", foreground="blue", wraplength=200) # 建立狀態標籤
         self.status_label.pack(anchor="w", pady=(10, 0)) # 放置標籤
 
-        self.btn_reset = ttk.Button(left_frame, text="Reset View", command=self.reset_all_view) # 建立重置視圖按鈕
+        self.btn_reset = ttk.Button(left_frame, text="🔄 Reset View", command=self.reset_all_view) # 建立重置視圖按鈕
         self.btn_reset.pack(fill=tk.X, ipady=2, pady=5) # 放置按鈕
         
-        btn_export = ttk.Button(left_frame, text="Export CSV", command=self.export_csv) # 建立匯出 CSV 按鈕
+        btn_export = ttk.Button(left_frame, text="💾 Export CSV", command=self.export_csv) # 建立匯出 CSV 按鈕
         btn_export.pack(fill=tk.X, ipady=2, pady=5) # 放置按鈕
         
-        btn_about = ttk.Button(left_frame, text="About", command=self.show_about) # 建立關於按鈕
+        btn_about = ttk.Button(left_frame, text="ℹ️ About", command=self.show_about) # 建立關於按鈕
         btn_about.pack(side=tk.BOTTOM, fill=tk.X, pady=10) # 放置按鈕
         
         # ======================   右側區域 (上下分割)   ======================
@@ -225,6 +227,7 @@ class RVDSApp: # 定義主應用程式類別
         self.sheet.header_font(newfont=(self.app_font[0], config.FONTSIZE, "bold")) # 設定標題字型
         self.sheet.enable_bindings("single_select", "drag_select", "column_select", "row_select", "column_width_resize", "arrowkeys", "right_click_popup_menu", "rc_select", "copy") # 啟用綁定
         self.sheet.extra_bindings("row_select", self.copy_selected_display_row) # 左鍵點擊行號時複製該列
+        self.apply_sheet_column_layout() # 套用緊湊欄寬
         self.sheet.popup_menu_add_command("A>Z Sort Ascending", self.sort_asc_from_cell) # 新增排序指令
         self.sheet.popup_menu_add_command("Z>A Sort Descending", self.sort_desc_from_cell) # 新增排序指令
         self.sheet.popup_menu_add_command("Filter", self.filter_from_cell) # 新增篩選指令
@@ -246,42 +249,32 @@ class RVDSApp: # 定義主應用程式類別
         self.compact_solver.pack(side=tk.LEFT, padx=(0, 5), fill="y", expand=False)
 
         # 2. Notes (Right)
-        notepad_frame = ttk.LabelFrame(bottom_area, padding=5) # 建立筆記框架
-        notepad_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True) # 放置框架
-
-        note_title = ttk.Frame(notepad_frame) # 建立筆記標題列
-        ttk.Label(note_title, text="📝 Notes (Right-click to paste)").pack(side=tk.LEFT) # 建立筆記標題
-        note_save = ttk.Label(note_title, text="💾", cursor="hand2") # 建立小型另存圖示
-        note_save.pack(side=tk.LEFT, padx=(4, 0)) # 放置小型另存圖示
-        note_save.bind("<Button-1>", lambda event: self.save_notes_as()) # 綁定點擊儲存 Notes
-        notepad_frame.configure(labelwidget=note_title) # 將小按鈕放在標題列，不佔用內容高度
-
-        note_scroll = ttk.Scrollbar(notepad_frame) # 建立捲軸
-        note_scroll.pack(side=tk.RIGHT, fill=tk.Y) # 放置捲軸
-
-        self.notepad = tk.Text(notepad_frame, height=10, font=self.app_font, undo=True) # 建立文字區域
-        self.notepad.pack(side=tk.LEFT, fill=tk.BOTH, expand=True) # 放置文字區域
-
-        # [UI] 預填表格標題至筆記區
-        self.notepad.insert("1.0", "R_Low\tR_Hi1\tR_Hi2\tV_Out\tDeviation%\tE24\n")
-        
-        self.notepad.config(yscrollcommand=note_scroll.set) # 設定捲軸指令
-        note_scroll.config(command=self.notepad.yview) # 設定捲軸控制
-        self.notepad.bind("<Button-3>", self.on_notepad_right_click) # 綁定右鍵點擊事件
-
-    def on_notepad_right_click(self, event): # 筆記區右鍵點擊事件處理
-        """ Notes 區域右鍵直接貼上 """ # 函數說明
-        try: # 嘗試執行
-            self.notepad.focus_set() # 設定焦點
-            # 移動游標到滑鼠點擊的位置
-            self.notepad.mark_set("insert", f"@{event.x},{event.y}") # 移動插入點
-            # 執行貼上
-            self.notepad.event_generate("<<Paste>>") # 觸發貼上事件
-            return "break" # 阻止預設行為
-        except: pass # 忽略錯誤
+        self.notes_frame = ui_components.NotesFrame(bottom_area, self.app_font, self.save_notes_as)
+        self.notes_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.notepad = self.notes_frame.text_widget # 保留參照供其他功能使用
 
     def copy_selected_display_row(self, event=None): # 點擊左側行號時複製該列
         self.root.after_idle(self.sheet.copy) # 使用 tksheet 內建複製，保持與右鍵 Copy 相同格式
+
+    def apply_sheet_column_layout(self): # 套用結果表緊湊欄寬
+        try:
+            self.sheet.set_options(auto_resize_columns=52) # 視窗變動時保持欄寬貼合，降低水平捲軸機率
+        except Exception:
+            pass
+
+        try:
+            self.sheet.set_index_width(self.sheet_index_width, redraw=False) # 縮小左側行號欄
+        except Exception:
+            pass
+
+        try:
+            self.sheet.set_column_widths(iter(self.sheet_column_widths)) # 設定各欄固定寬度
+        except Exception:
+            for col_idx, width in enumerate(self.sheet_column_widths):
+                try:
+                    self.sheet.column_width(column=col_idx, width=int(width))
+                except Exception:
+                    pass
 
     def save_notes_as(self): # 另存 Notes 內容
         content = self.notepad.get("1.0", "end-1c") # 取得筆記內容
@@ -530,6 +523,7 @@ class RVDSApp: # 定義主應用程式類別
         # Extract data for sheet
         data = [[r['R_Low_Str'], r['R_Hi1_Str'], r['R_Hi2_Str'], r['Vout_Str'], r['V_Dev_Str'], r['E24_Count_Str']] for r in display_rows] # 提取顯示資料
         self.sheet.set_sheet_data(data) # 設定表格資料
+        self.apply_sheet_column_layout() # 重新套用緊湊欄寬
         self.sheet.dehighlight_all() # 清除所有高亮
 
         # Apply Highlighting

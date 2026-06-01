@@ -120,9 +120,9 @@ class FilterWindow(tk.Toplevel): # 定義篩選視窗類別，繼承自 Toplevel
 # ==============================================================================
 # 🧩 緊湊型求解器 (Compact Solver) - 整合自獨立測試模組
 # ==============================================================================
-class CompactSolverFrame(ttk.Frame):
+class CompactSolverFrame(ttk.LabelFrame):
     def __init__(self, parent, colors):
-        super().__init__(parent)
+        super().__init__(parent, text="⚡ Quick Solver", padding=2)
         self.colors = colors
         self._is_calculating = False # [FIX] 防止遞迴觸發的旗標
         
@@ -145,10 +145,6 @@ class CompactSolverFrame(ttk.Frame):
         self.update_ui_state()
 
     def create_widgets(self):
-        # [緊湊化] 使用 LabelFrame 直接做為容器，自帶標題
-        self.main_frame = ttk.LabelFrame(self, text="⚡ Quick Solver", padding=2)
-        self.main_frame.pack(fill="both", expand=True, padx=0, pady=0)
-        
         # [緊湊化] 欄位設定
         rows_config = [
             ("V_Out", self.sv_vout, "vout", self.colors["target"]),
@@ -160,16 +156,16 @@ class CompactSolverFrame(ttk.Frame):
         self.entries = {}
         
         # [緊湊化] 簡易表頭 (Row 0)
-        ttk.Label(self.main_frame, text="⚡", font=(self.f_norm[0], config.FONTSIZE)).grid(row=0, column=0, pady=1)
-        ttk.Label(self.main_frame, text="Param", font=(self.f_norm[0], config.FONTSIZE)).grid(row=0, column=1, pady=1)
-        ttk.Label(self.main_frame, text="Value", font=(self.f_norm[0], config.FONTSIZE)).grid(row=0, column=2, pady=1)
+        ttk.Label(self, text="⚡", font=(self.f_norm[0], config.FONTSIZE)).grid(row=0, column=0, pady=1)
+        ttk.Label(self, text="Param", font=(self.f_norm[0], config.FONTSIZE)).grid(row=0, column=1, pady=1)
+        ttk.Label(self, text="Value", font=(self.f_norm[0], config.FONTSIZE)).grid(row=0, column=2, pady=1)
 
         for idx, (label_text, var, mode_key, color) in enumerate(rows_config):
             r = idx + 1
             
             # 1. RadioButton (緊湊版)
             rb = ttk.Radiobutton(
-                self.main_frame, 
+                self, 
                 variable=self.target_mode, 
                 value=mode_key,
                 command=self.update_ui_state
@@ -177,20 +173,20 @@ class CompactSolverFrame(ttk.Frame):
             rb.grid(row=r, column=0, padx=1, pady=1)
             
             # 2. Label (緊湊版)
-            lbl = ttk.Label(self.main_frame, text=label_text, font=self.f_bold, foreground=color, anchor="center")
+            lbl = ttk.Label(self, text=label_text, font=self.f_bold, foreground=color, anchor="center")
             lbl.grid(row=r, column=1, padx=2, pady=1, sticky="ew")
             
             # 3. Entry (緊湊版)
-            entry = tk.Entry(self.main_frame, textvariable=var, font=self.f_norm, width=10, justify="center")
+            entry = tk.Entry(self, textvariable=var, font=self.f_norm, width=10, justify="center")
             entry.grid(row=r, column=2, padx=2, pady=1, sticky="ew")
             self.entries[mode_key] = entry
             
-        self.main_frame.columnconfigure(2, weight=1)
+        self.columnconfigure(2, weight=1)
         # [UI優化] Row 0 (表頭) 不參與拉伸 (weight=0)，保持最小高度
-        self.main_frame.rowconfigure(0, weight=0)
+        self.rowconfigure(0, weight=0)
         # [UI優化] Row 1~4 (資料列) 平均分配剩餘垂直空間 (weight=1)
         for i in range(1, len(rows_config) + 1):
-            self.main_frame.rowconfigure(i, weight=1)
+            self.rowconfigure(i, weight=1)
 
     def update_ui_state(self):
         target = self.target_mode.get()
@@ -295,3 +291,40 @@ class CircuitCanvas(tk.Canvas):
         self.create_line(cx-15, gy+10, cx+15, gy+10, width=line_width, fill=default_color)
         self.create_line(cx-10, gy+14, cx+10, gy+14, width=line_width, fill=default_color)
         self.create_line(cx-5, gy+18, cx+5, gy+18, width=line_width, fill=default_color)
+
+# ==============================================================================
+# 📝 筆記區域 (Notes Frame)
+# ==============================================================================
+class NotesFrame(ttk.LabelFrame):
+    def __init__(self, parent, app_font, save_callback):
+        super().__init__(parent, padding=5)
+        
+        # 將標題與按鈕整合在 labelwidget 中，實現緊湊佈局
+        note_title = ttk.Frame(self)
+        ttk.Label(note_title, text="📝 Notes (Right-click to paste)  ").pack(side=tk.LEFT)
+        note_save = ttk.Label(note_title, text="💾 Save", cursor="hand2", foreground="#AD00AD")
+        note_save.pack(side=tk.LEFT)
+        note_save.bind("<Button-1>", lambda event: save_callback())
+        self.configure(labelwidget=note_title)
+
+        note_scroll = ttk.Scrollbar(self)
+        note_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.text_widget = tk.Text(self, height=10, font=app_font, undo=True, relief="flat", borderwidth=0, highlightthickness=0)
+        self.text_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        # [UI] 預填表格標題至筆記區
+        self.text_widget.insert("1.0", "R_Low\tR_Hi1\tR_Hi2\tV_Out\tDeviation%\tE24\n")
+        
+        self.text_widget.config(yscrollcommand=note_scroll.set)
+        note_scroll.config(command=self.text_widget.yview)
+        self.text_widget.bind("<Button-3>", self.on_right_click)
+
+    def on_right_click(self, event):
+        """ Notes 區域右鍵直接貼上 """
+        try:
+            self.text_widget.focus_set()
+            self.text_widget.mark_set("insert", f"@{event.x},{event.y}")
+            self.text_widget.event_generate("<<Paste>>")
+            return "break"
+        except: pass
