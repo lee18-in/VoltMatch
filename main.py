@@ -82,14 +82,8 @@ class RVDSApp: # 定義主應用程式類別
         self.tolerance.trace_add("write", self._sync_slider_from_val) # 綁定容差變動事件
         self.r_hi_mode.trace_add("write", lambda *args: self.circuit_canvas.draw_circuit(self.r_hi_mode.get())) # 監聽模式切換以重繪電路圖 # 綁定 R_Hi 模式變動事件
 
-        # [UI Colors] 定義區塊配色方案
-        self.ui_colors = { # 定義 UI 顏色字典
-            "target": "#AD00AD",  # Red (Target Voltage) # 目標電壓顏色
-            "hi":     "#FF0000",  # Orange (High Side) # 高側電阻顏色
-            "ref":    "#2F00FF",  # Blue (V_Ref) # 參考電壓顏色
-            "low":    "#008000",  # Green (Low Side) # 低側電阻顏色
-            "line":   "#000000"   # Dark Gray (Default Line) # 線條顏色
-        }
+        # 從 config 載入區塊配色方案
+        self.ui_colors = config.UI_COLORS
         self.create_widgets() # 建立介面元件
 
     def create_widgets(self): # 建立介面元件函數

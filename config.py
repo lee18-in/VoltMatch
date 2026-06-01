@@ -7,6 +7,15 @@ C_RED = "#FFC0C0"       # Light Red
 C_PURPLE = "#FFC0FF"    # Light Purple
 FONTSIZE = 12           # 預設字型大小
 
+# UI 區塊配色方案 (字體/線條)
+UI_COLORS = {
+    "target": "#AD00AD",  # Red/Purple (Target Voltage)
+    "hi":     "#FF0000",  # Red (High Side)
+    "ref":    "#2F00FF",  # Blue (V_Ref)
+    "low":    "#008000",  # Green (Low Side)
+    "line":   "#000000"   # Dark Gray (Default Line)
+}
+
 # 全域常數
 PRECISION_DIGITS = 4    # 精度設定：用於浮點數比對的位數
 H_TITLE = "VoltMatch - Voltage Divider Optimizer - by lee18.in - Ver. 26.0526.1"
