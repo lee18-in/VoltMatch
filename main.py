@@ -64,7 +64,6 @@ class RVDSApp: # 定義主應用程式類別
         self.r_low_e24_only = tk.BooleanVar(value=False) # 初始化 R_Low E24 限制變數
 
         self.r_hi_mode = tk.StringVar(value="Unlock") # 初始化 R_Hi 模式變數
-        self.r_hi_lock_val = tk.DoubleVar(value=0) # 初始化 R_Hi 鎖定值
         self.r_hi_min = tk.DoubleVar(value=0) # 初始化 R_Hi 最小值
         self.r_hi_max = tk.DoubleVar(value=1000000) # 初始化 R_Hi 最大值
         self.r_hi1_e24_only = tk.BooleanVar(value=False) # 初始化 R_Hi1 E24 限制變數
@@ -380,7 +379,6 @@ class RVDSApp: # 定義主應用程式類別
                 'r_low_max': self.r_low_max.get(), # R_Low 最大值
                 'r_low_e24': self.r_low_e24_only.get(), # R_Low E24 限制
                 'r_hi_mode': self.r_hi_mode.get(), # R_Hi 模式
-                'r_hi_lock': self.r_hi_lock_val.get(), # R_Hi 鎖定值
                 'r_hi_min': self.r_hi_min.get(), # R_Hi 最小值
                 'r_hi_max': self.r_hi_max.get(), # R_Hi 最大值
                 'r_hi1_e24': self.r_hi1_e24_only.get(), # R_Hi1 E24 限制
