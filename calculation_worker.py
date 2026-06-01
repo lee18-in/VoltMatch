@@ -45,11 +45,10 @@ def worker_calculation(p, msg_queue): # 背景計算函數
         msg_queue.put(("status", ("Generating combination matrix...", "blue"))) # 發送狀態訊息
         
         current_tol = p['tol'] # 取得目前容差
-        MAX_RETRY_LIMIT = 40 # 設定最大重試次數
         retry_count = 0 # 初始化重試計數
         final_rows = [] # 初始化結果列表
         
-        while retry_count < MAX_RETRY_LIMIT: # 迴圈重試
+        while retry_count < config.WORKER_MAX_RETRY: # 迴圈重試
             
             # [ROMANCE] 每次迴圈開始，更新介面滑塊位置
             # 這樣你可以看到滑塊跳到新的位置，準備開始掃描
@@ -69,14 +68,13 @@ def worker_calculation(p, msg_queue): # 背景計算函數
             k_min = ((p['v_target'] * (1 - tol_dec)) / p['v_ref']) - 1 # 計算最小比率
             k_max = ((p['v_target'] * (1 + tol_dec)) / p['v_ref']) - 1 # 計算最大比率
             
-            chunk_size = 500 # 設定區塊大小
             
-            for i in range(0, len(r_low_rng), chunk_size): # 分塊處理 R_Low
-                if i % (chunk_size * 10) == 0: # 每 10 個區塊更新一次狀態
+            for i in range(0, len(r_low_rng), config.WORKER_CHUNK_SIZE): # 分塊處理 R_Low
+                if i % (config.WORKER_CHUNK_SIZE * 10) == 0: # 每 10 個區塊更新一次狀態
                     # 狀態列顯示正在掃描，配合滑塊位置，很有感覺
                     msg_queue.put(("status", (f"Scanning... {current_tol:.4f}% (Attempt {retry_count})", "orange"))) # 發送狀態訊息
                 
-                chunk = r_low_rng[i:i+chunk_size] # 取得目前區塊
+                chunk = r_low_rng[i:i+config.WORKER_CHUNK_SIZE] # 取得目前區塊
                 for rl in chunk: # 遍歷區塊內的 R_Low
                     t_min, t_max = rl * k_min, rl * k_max # 計算目標範圍
                     mask = (flat >= t_min) & (flat <= t_max) # 建立遮罩
