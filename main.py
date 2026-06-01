@@ -224,6 +224,7 @@ class RVDSApp: # 定義主應用程式類別
         self.sheet.font(newfont=self.app_font) # 設定字型
         self.sheet.header_font(newfont=(self.app_font[0], config.FONTSIZE, "bold")) # 設定標題字型
         self.sheet.enable_bindings("single_select", "drag_select", "column_select", "row_select", "column_width_resize", "arrowkeys", "right_click_popup_menu", "rc_select", "copy") # 啟用綁定
+        self.sheet.extra_bindings("row_select", self.copy_selected_display_row) # 左鍵點擊行號時複製該列
         self.sheet.popup_menu_add_command("A>Z Sort Ascending", self.sort_asc_from_cell) # 新增排序指令
         self.sheet.popup_menu_add_command("Z>A Sort Descending", self.sort_desc_from_cell) # 新增排序指令
         self.sheet.popup_menu_add_command("Filter", self.filter_from_cell) # 新增篩選指令
@@ -245,17 +246,24 @@ class RVDSApp: # 定義主應用程式類別
         self.compact_solver.pack(side=tk.LEFT, padx=(0, 5), fill="y", expand=False)
 
         # 2. Notes (Right)
-        notepad_frame = ttk.LabelFrame(bottom_area, text="📝 Notes (Right-click to paste)", padding=5) # 建立筆記框架
+        notepad_frame = ttk.LabelFrame(bottom_area, padding=5) # 建立筆記框架
         notepad_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True) # 放置框架
-        
+
+        note_title = ttk.Frame(notepad_frame) # 建立筆記標題列
+        ttk.Label(note_title, text="📝 Notes (Right-click to paste)").pack(side=tk.LEFT) # 建立筆記標題
+        note_save = ttk.Label(note_title, text="💾", cursor="hand2") # 建立小型另存圖示
+        note_save.pack(side=tk.LEFT, padx=(4, 0)) # 放置小型另存圖示
+        note_save.bind("<Button-1>", lambda event: self.save_notes_as()) # 綁定點擊儲存 Notes
+        notepad_frame.configure(labelwidget=note_title) # 將小按鈕放在標題列，不佔用內容高度
+
         note_scroll = ttk.Scrollbar(notepad_frame) # 建立捲軸
         note_scroll.pack(side=tk.RIGHT, fill=tk.Y) # 放置捲軸
 
         self.notepad = tk.Text(notepad_frame, height=10, font=self.app_font, undo=True) # 建立文字區域
         self.notepad.pack(side=tk.LEFT, fill=tk.BOTH, expand=True) # 放置文字區域
-        
+
         # [UI] 預填表格標題至筆記區
-        self.notepad.insert("1.0", "R_Low	R_Hi1	R_Hi2	V_Out" + "	      Deviation%   E24" + "\n")
+        self.notepad.insert("1.0", "R_Low\tR_Hi1\tR_Hi2\tV_Out\tDeviation%\tE24\n")
         
         self.notepad.config(yscrollcommand=note_scroll.set) # 設定捲軸指令
         note_scroll.config(command=self.notepad.yview) # 設定捲軸控制
@@ -271,6 +279,48 @@ class RVDSApp: # 定義主應用程式類別
             self.notepad.event_generate("<<Paste>>") # 觸發貼上事件
             return "break" # 阻止預設行為
         except: pass # 忽略錯誤
+
+    def copy_selected_display_row(self, event=None): # 點擊左側行號時複製該列
+        self.root.after_idle(self.sheet.copy) # 使用 tksheet 內建複製，保持與右鍵 Copy 相同格式
+
+    def save_notes_as(self): # 另存 Notes 內容
+        content = self.notepad.get("1.0", "end-1c") # 取得筆記內容
+        if not content.strip(): # 若無內容
+            messagebox.showinfo("Info", "No notes to save.") # 顯示訊息
+            return # 返回
+
+        file_type_var = tk.StringVar(value="Text Files") # 追蹤另存對話框選擇的檔案類型
+        filename = filedialog.asksaveasfilename( # 開啟另存對話框
+            defaultextension="", # 由下方檔案類型決定副檔名，避免切換 CSV 時欄位仍顯示 .txt
+            initialfile="VoltMatch_Notes", # 預設檔名不預先帶副檔名
+            filetypes=[("Text Files", "*.txt"), ("CSV Files", "*.csv"), ("All Files", "*.*")], # 檔案類型
+            typevariable=file_type_var, # 取得使用者選擇的檔案類型
+            title="Save Notes" # 標題
+        )
+
+        if not filename: return # 若取消則返回
+
+        try:
+            selected_type = file_type_var.get().lower() # 取得選擇的檔案類型
+            ext = os.path.splitext(filename)[1].lower() # 取得副檔名
+            if "csv" in selected_type and ext != ".csv": # 若選 CSV 但檔名仍是 .txt 或沒有副檔名
+                filename = os.path.splitext(filename)[0] + ".csv" # 自動改成 .csv
+            elif ext == "" and ("text" in selected_type or "txt" in selected_type): # 若選 TXT 且沒有副檔名
+                filename += ".txt" # 自動補 .txt
+
+            ext = os.path.splitext(filename)[1].lower() # 取得副檔名
+            if ext == ".csv": # 若選擇 CSV
+                with open(filename, "w", newline="", encoding="utf-8-sig") as f: # 開啟 CSV 檔案
+                    writer = csv.writer(f) # 建立 CSV 寫入器
+                    for line in content.splitlines(): # 逐行處理
+                        writer.writerow(line.split("\t")) # 將 tab 分隔內容轉成 CSV 欄位
+            else:
+                with open(filename, "w", encoding="utf-8") as f: # 開啟文字檔
+                    f.write(content) # 寫入原始文字
+
+            messagebox.showinfo("Success", f"Saved to {filename}") # 顯示成功訊息
+        except Exception as e:
+            messagebox.showerror("Save Error", str(e)) # 顯示錯誤訊息
 
     def _sync_val_from_slider(self, val): # 滑桿同步數值函數
         """ 當滑桿移動時：使用 5 次方映射計算實際容差 (極度放大左側解析度) """ # 函數說明
