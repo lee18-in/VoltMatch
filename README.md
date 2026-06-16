@@ -69,7 +69,21 @@ pip install numpy tksheet
 
 If you intend to bundle this application into a standalone executable using tools like **PyInstaller** or **Nuitka**, please ensure that the `CREDITS.txt` file is placed in the same directory as the executable (or properly bundled into the resource path). Otherwise, the "About" window may fail to display the correct developer and open-source acknowledgments.
 
-## 📜 License & Credits
+## � Download GitHub Actions Artifacts
+
+When the GitHub Actions workflow runs, the generated packages are attached as workflow artifacts:
+
+- `voltmatch-windows-exe` → contains `dist/VoltMatch.exe`
+- `voltmatch-linux-appimage` → contains `VoltMatch-x86_64.AppImage`
+
+To download them:
+
+1. Open the GitHub repository page.
+2. Go to the latest workflow run under **Actions**.
+3. Select the completed workflow run.
+4. Click **Artifacts** and download the package you need.
+
+## �📜 License & Credits
 
 - **Author:** Andy Lee (lee18.in)
 - **License:** MIT License
