@@ -1,3 +1,5 @@
+<!-- AI AGENTS: Read ./AGENTS.md first, then ./LLM_MEMORY.md.
+     Do NOT write planning content into this file. -->
 # ⚡ VoltMatch
 
 **A Professional Voltage Divider Optimizer for Hardware Engineers**
