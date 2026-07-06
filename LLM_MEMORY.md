@@ -3,8 +3,8 @@
 ## A. 目前狀態(每次交接必更新)
 
 - 目前階段: build
-- 最後更新: 2026-07-05 21:24 / 當時階段: build
-- 最新 commit: 1a3dced 成功修正github actions
+- 最後更新: 2026-07-06 18:05 / 當時階段: build
+- 最新 commit: fd3d108 升級 AI agent 工作流至 Playbook v2
 - 進行中任務: 不同作業系統的uiux相容 畫面顯示 字形排版調整 for 不同作業系統
 - 阻塞點: 無
 
@@ -29,6 +29,12 @@
 
 ## C. 交接日誌(只追加,不刪改;最新在最上,每筆一個小節)
 
+### 2026-07-06 18:05 [maintain] 使用工具: Claude Haiku 4.5
+
+- 完成了什麼: Playbook v1→v2 升級完成。AGENTS.md 整份覆蓋至新版模板（Playbook-Version: 2），§5 改為純文字指向 LLM_MEMORY.md〈E. 專案技術脈絡〉；新增 LLM_MEMORY.md〈E. 專案技術脈絡〉區塊，搬入 v1 §5 既填值（建置指令、測試指令、程式碼慣例）。
+- 下一個 agent 該做什麼: 無（升級完成，可恢復原定 build 階段任務）。
+- 地雷警告: 無
+
 ### 2026-07-06 18:00 [maintain] 使用工具: Claude Haiku 4.5
 
 - 完成了什麼: Git Hook 驗證完成。發現 pre-commit 與 commit-msg 腳本權限未設置為可執行，執行 `chmod +x` 修復；測試結果：pre-commit 成功攔截缺少 LLM_MEMORY.md 變更的 commit、commit-msg 成功攔截不符合 [plan]/[build]/[maintain]/[takeover] 格式的 commit 訊息。
@@ -48,3 +54,9 @@
 - 地雷警告: 無
 
 ## D. 已封存結論(自〈總結封存〉搬入,唯讀)
+
+## E. 專案技術脈絡(依專案填寫,agent 得隨專案實況更新,保持精簡)
+
+- 建置指令: `pyinstaller VoltMatch.spec` (若需編譯執行檔)
+- 測試指令: `python main.py`
+- 程式碼慣例: Python 3.x, 使用 Tkinter (UI), NumPy 等
