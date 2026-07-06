@@ -1,4 +1,4 @@
-<!-- Playbook-Version: 1 -->
+<!-- Playbook-Version: 2 -->
 # AGENTS.md — 所有 AI agent 的最高指令
 
 ## 0. 強制第一步
@@ -61,8 +61,7 @@
 - 禁止修改本檔(AGENTS.md)除非使用者明確指示。
 - 本專案的 commit 會被 `scripts/hooks/` 內的 Git Hook 檢查(commit 訊息格式是否符合 §3、是否已包含 `LLM_MEMORY.md` 的變更),未通過會被直接擋下;不得用 `--no-verify` 等方式略過檢查。
 
-## 5. 專案技術脈絡(依專案填寫,保持精簡)
+## 5. 專案技術脈絡
 
-- 建置指令: `pyinstaller VoltMatch.spec` (若需編譯執行檔)
-- 測試指令: `python main.py`
-- 程式碼慣例: Python 3.x, 使用 Tkinter (UI), NumPy 等。
+- 建置指令、測試指令、程式碼慣例等依專案而異的實況,一律記載於 `./LLM_MEMORY.md`〈E. 專案技術脈絡〉,由 agent 隨專案實況更新。
+- 本檔是憲法,不記載任何依專案而異的內容;每個專案的 AGENTS.md 條文一模一樣。
