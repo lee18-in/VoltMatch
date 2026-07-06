@@ -1,0 +1,10 @@
+#!/bin/sh
+# 驗證 commit 訊息是否符合 AGENTS.md §3 格式：[plan/build/maintain/takeover] 動作簡述
+commit_msg_file="$1"
+first_line=$(head -n 1 "$commit_msg_file")
+
+if ! printf '%s' "$first_line" | grep -qE '^\[(plan|build|maintain|takeover)\]'; then
+  echo "錯誤：commit 訊息必須以 [plan] / [build] / [maintain] / [takeover] 其中一種標籤開頭（見 AGENTS.md §3）。" >&2
+  echo "目前訊息：$first_line" >&2
+  exit 1
+fi

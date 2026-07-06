@@ -1,0 +1,7 @@
+#!/bin/sh
+# 強制要求每次 commit 都要更新 LLM_MEMORY.md（見 AGENTS.md §0）；不留例外通道。
+if ! git diff --cached --name-only | grep -q '^LLM_MEMORY\.md$'; then
+  echo "錯誤：本次 commit 未包含 LLM_MEMORY.md 的變更。" >&2
+  echo "請先依 AGENTS.md §0 更新〈交接日誌〉與〈目前狀態〉再 commit。" >&2
+  exit 1
+fi
