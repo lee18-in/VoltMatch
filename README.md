@@ -10,6 +10,21 @@ VoltMatch is a graphical voltage divider optimization tool designed for hardware
 
 Unlike conventional calculators that only provide a "single best solution," VoltMatch's core design philosophy is to **exhaustively calculate all possible resistor combinations within an allowable tolerance range**. This approach gives engineers maximum flexibility to choose the most suitable standard components based on actual inventory, cost constraints, and specific application requirements.
 
+## ⬇️ Download
+
+Prebuilt packages for each tagged version are published on the **Releases** page:
+
+### 👉 [https://github.com/lee18-in/VoltMatch/releases/latest](https://github.com/lee18-in/VoltMatch/releases/latest)
+
+| Platform | File | Notes |
+| --- | --- | --- |
+| Windows | `VoltMatch.exe` | Standalone executable, no installation required. |
+| Linux | `VoltMatch-x86_64.AppImage` | Run `chmod +x VoltMatch-x86_64.AppImage` before launching. |
+
+### Development builds
+
+Every push to `main` also builds both packages as workflow artifacts (`voltmatch-windows-exe` / `voltmatch-linux-appimage`). To download them, open the repository's **Actions** tab, select the latest completed workflow run, and download the package from the **Artifacts** section. Note that artifacts expire after GitHub's retention period, while Releases are permanent.
+
 ## ✨ Core Features
 
 - 🔍 **Exhaustive Search Algorithm**: Calculates and lists all feasible solutions. Features an Auto-Relaxing Tolerance mechanism to guarantee results even under strict constraints.
@@ -71,20 +86,7 @@ pip install numpy tksheet
 
 If you intend to bundle this application into a standalone executable using tools like **PyInstaller** or **Nuitka**, please ensure that the `CREDITS.txt` file is placed in the same directory as the executable (or properly bundled into the resource path). Otherwise, the "About" window may fail to display the correct developer and open-source acknowledgments.
 
-## ⬇️ Download
 
-Prebuilt packages for each tagged version are published on the **Releases** page:
-
-### 👉 [https://github.com/lee18-in/VoltMatch/releases/latest](https://github.com/lee18-in/VoltMatch/releases/latest)
-
-| Platform | File | Notes |
-| --- | --- | --- |
-| Windows | `VoltMatch.exe` | Standalone executable, no installation required. |
-| Linux | `VoltMatch-x86_64.AppImage` | Run `chmod +x VoltMatch-x86_64.AppImage` before launching. |
-
-### Development builds
-
-Every push to `main` also builds both packages as workflow artifacts (`voltmatch-windows-exe` / `voltmatch-linux-appimage`). To download them, open the repository's **Actions** tab, select the latest completed workflow run, and download the package from the **Artifacts** section. Note that artifacts expire after GitHub's retention period, while Releases are permanent.
 
 ## 📜 License & Credits
 
