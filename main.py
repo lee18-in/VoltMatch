@@ -39,7 +39,8 @@ class RVDSApp: # 定義主應用程式類別
         self.root = root # 儲存 root 視窗物件
         self.root.title(config.H_TITLE) # 設定視窗標題
         self.root.geometry(config.WINDOWS_SIZE) # 設定視窗大小
-        
+        self.root.minsize(*config.MIN_WINDOW_SIZE) # 限制最小視窗大小，避免縮太小時左欄與底部區塊被裁切
+
         self.app_font = ui_components.configure_system_settings(root) # 設定系統字型
         
         # [Threading] 初始化 Queue
