@@ -4,6 +4,7 @@ from tkinter import ttk, messagebox
 from tkinter import font as tkfont
 import platform
 import config
+import divider_math
 
 def configure_system_settings(root):
     """ 系統相容性設定  根據作業系統設定字型與樣式 """
@@ -217,19 +218,15 @@ class CompactSolverFrame(ttk.LabelFrame):
             
             r2, vfb, r1, vout = get(self.sv_low), get(self.sv_vfb), get(self.sv_hi), get(self.sv_vout)
 
-            res = 0.0
+            # 公式本體一律走 divider_math，不在 UI 層重複實作 (與搜尋演算法共用同一份知識)
             if target == "vout":
-                if r2 != 0: res = vfb * (1 + r1 / r2)
-                self.sv_vout.set(f"{res:.6g}") 
+                self.sv_vout.set(f"{divider_math.solve_v_out(vfb, r1, r2):.6g}")
             elif target == "hi":
-                if vfb != 0: res = r2 * (vout / vfb - 1)
-                self.sv_hi.set(f"{res:.6g}")
+                self.sv_hi.set(f"{divider_math.solve_r_high(vfb, vout, r2):.6g}")
             elif target == "low":
-                if vfb != 0 and (vout/vfb - 1) != 0: res = r1 / (vout / vfb - 1)
-                self.sv_low.set(f"{res:.6g}")
+                self.sv_low.set(f"{divider_math.solve_r_low(vfb, vout, r1):.6g}")
             elif target == "vfb":
-                if r2 != 0 and (1 + r1/r2) != 0: res = vout / (1 + r1 / r2)
-                self.sv_vfb.set(f"{res:.6g}")
+                self.sv_vfb.set(f"{divider_math.solve_v_ref(vout, r1, r2):.6g}")
         except: 
             pass
         finally:
