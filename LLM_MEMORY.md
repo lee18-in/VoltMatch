@@ -2,32 +2,52 @@
 
 ## A. 目前狀態(每次交接必更新)
 
-- 目前階段: build
-- 最後更新: 2026-07-26 23:20 / 當時階段: build
-- 最新 commit: 見 git log(已發版 tag: v26.0726.1;目前工作分支 `refactor/divider-math-core`,未推遠端)
-- 進行中任務: B3「核心計算邏輯 API 化」的第一步 — 分壓公式抽離至 `divider_math.py`(已完成,使用者審閱通過,待合併)。跨 OS UI 相容任務的 Circuit 電路圖區塊已完成。
-- 阻塞點: 無。待決事項:23:20 交接日誌記錄的三項解耦待辦(含一個已復現的 E24_Count bug)是否納入計畫,需使用者裁示;分支 `refactor/divider-math-core` 合併回 main 的時機亦待指示。
+- 目前階段: plan(2026-07-26 23:30 由使用者宣告,自 build 切入)
+- 最後更新: 2026-07-26 23:30 / 當時階段: plan
+- 最新 commit: 見 git log(已發版 tag: v26.0726.1;目前工作分支 `refactor/divider-math-core`,已推遠端同名分支,未合併 main)
+- 進行中任務: 規劃「運算與 UI 解耦」的後續路線,已將解耦審查的三項待辦寫入 B1/B2/B3。
+- 阻塞點: B 區新增內容目前全部標記〈草稿〉,**未定案前 build 階段不得依此改動程式碼**(AGENTS.md §1);需使用者逐項確認是否定案。
 
 ## B. 規劃(規劃階段 [plan] 專屬區;狀態: 草稿 | 已定案)
+
+> 本區 2026-07-26 23:30 新增的 D1~D3 與 B2/B3 條目狀態一律為〈草稿〉,依 AGENTS.md §1,未標記〈已定案〉前禁止依此改動程式碼。
 
 ### B1. 架構決策(已定案後鎖定,建置/維運階段不得改)
 
 | # | 決策 | 理由 | 狀態 |
 |---|------|------|------|
+| D1 | 領域知識單一來源:分壓公式、E 系列標準值判定等領域規則,全庫只能有一份實作,UI 層一律呼叫共用模組,不得自行寫第二份 | 已實際出事兩次:分壓公式曾同時存在於 `calculation_worker` 與 Quick Solver(已修);E 系列判定至今仍有兩份且結果不一致,造成單電阻模式 E24_Count 錯誤 | 草稿 |
+| D2 | 分層為 core / app / ui 三層:core 零 UI 依賴、零執行緒依賴(進度以 callback 或 generator 回報);app 負責輸入驗證、契約定義與結果格式化;ui 只處理 tkinter、顏色與版面 | 為 B3 的 API 化與日後 Web 前端鋪路;現況 core 邊界已可精確畫出(`divider_math` + `get_resistor_list` + 7 個領域常數),拆分屬機械工 | 草稿 |
+| D3 | core 層模組維持最小依賴,`divider_math.py` 維持零 import(不得 import config/numpy/UI) | 確保運算核心可原封不動移植到其他前端(Web/API/CLI) | 草稿 |
 
 ### B2. 短期目標(本週)
 
 - [ ] 跨作業系統 UI/UX 相容性優化：針對不同作業系統（Windows / Linux 等）進行畫面顯示與字體排版調整，確保視覺體驗一致。
+  - 進度：Circuit 電路圖區塊已改為依字型度量排版並填滿版面（已完成）；`MIN_WINDOW_SIZE` 已導入。**尚未在 Windows / macOS 實機驗證**。
+- [ ] 【草稿・Bug】修正 E24_Count 判定不一致：`calculation_worker.py:128-131` 用 `np.isin(值, e24_full_list)`、`utils.py:51` `determine_r_color()` 用有效數字比對，兩法對 `0` 的判定相反（根因：`config.E24_BASE` / `E96_BASE` 最後一個元素為 `0`，使 `0` 進了電阻表）。後果：單電阻（Disable）模式下 `r_hi2_rng = [0.0]`，每列 `E24_Count` 比畫面綠色格子多 1。
+  - 驗收條件：抽出「回傳 E 系列分類、不回傳顏色」的共用函式供兩邊使用，顏色映射留在 UI；並明確定義 `0` 是否算標準值。修正後單電阻模式下 `E24_Count` 需與畫面綠色格子數一致。
+  - 復現：`r_hi_mode='Disable'`、R_Low 鎖 10000、V_Ref 3.3、V_Target 81.92 → R_Hi1=240000/R_Hi2=0 該列 worker 算 E24_Count=3，畫面綠格只有 2。
 
 ### B3. 中期目標(本月)
 
-- [ ] 核心計算邏輯 API 化：重構計算模組，定義標準化的輸入變數與輸出格式介面，將運算邏輯與 UI 介面解耦。
+- [ ] 核心計算邏輯 API 化：重構計算模組，定義標準化的輸入變數與輸出格式介面，將運算邏輯與 UI 介面解耦。拆解為四步，依序執行：
+  - [x] **步驟 1（已完成，使用者審閱通過）** 分壓公式抽離至零依賴的 `divider_math.py`，`calculation_worker` 與 Quick Solver 共用同一份。
+  - [ ] **步驟 2【草稿】** 統一 E 系列判定（即 B2 的 bug 項），完成後領域知識即無第二份實作。
+  - [ ] **步驟 3【草稿】** 拆分 `utils.py` / `config.py` 的職責。已查明呼叫者零重疊，可機械拆分：`get_resistor_list` → core；`fmt_rkm` / `determine_r_color` / `calc_gradient_hex` → presentation；`get_resource_path` → packaging。`config.py` 需將領域常數（E24_BASE、E96_BASE、PRECISION_DIGITS、MAX_TOLERANCE、MIN_TOLERANCE、WORKER_CHUNK_SIZE、WORKER_MAX_RETRY）與 UI 常數（WINDOWS_SIZE、FONTSIZE、UI_COLORS、SHEET_COLUMN_WIDTHS 等）切開。
+  - [ ] **步驟 4【草稿】** 訊息格式與輸入契約（動靜最大，最後做）：(a) 移除運算層的表示層概念 —— status 訊息自帶的顏色字串、`calculation_worker.py:60` 純視覺用途的 `time.sleep(0.1)`；(b) `params` 14 個 key 改為顯式契約（dataclass/schema），驗證邏輯自 `main.py:360` `validate_input` 移出 UI（現況直接寫回 `tk_var`，與 widget 綁死）；(c) 檢討 `limit`（顯示筆數上限）反向驅動 `calculation_worker.py:142-160` 收緊容差的設計 —— 展示需求不應控制演算法行為；(d) 回報格式 `("status"|"error"|"update_tol"|"success", data)` 改為有明確 schema 的形式，便於換成 WebWorker postMessage / SSE。
 
 ### B4. 長期目標
 
 - [ ]
 
 ## C. 交接日誌(只追加,不刪改;最新在最上,每筆一個小節)
+
+### 2026-07-26 23:30 [plan] 使用工具: Claude Opus 5 (Claude Code)
+
+- 完成了什麼: 依使用者宣告自 build 切入 plan 階段,將 23:20 那筆審查提案的三項待辦正式寫入〈B. 規劃〉:B1 新增三條架構決策 D1(領域知識單一來源)、D2(core/app/ui 三層)、D3(core 維持最小依賴、`divider_math.py` 零 import);B2 新增 E24_Count bug 修正項(含驗收條件與復現步驟),並補註跨 OS 任務的實際進度(Circuit 已完成、Windows/macOS 未實機驗證);B3 將「核心計算邏輯 API 化」拆為四個步驟(步驟 1 已完成並勾選,步驟 2~4 為草稿)。**新增內容一律標記〈草稿〉,B 區開頭已加註未定案前禁止依此改程式碼。**
+- 防膨脹維護: 已檢查〈交接日誌〉現有 11 筆(含本筆),未達 20 筆門檻,不需壓縮;〈已封存結論〉為空,不需搬 ARCHIVE.md。
+- 下一個 agent 該做什麼: 等待使用者逐項裁示 D1~D3 與 B2/B3 草稿是否〈已定案〉。定案前不得動程式碼。若使用者裁示定案並切回 [build],建議從 B3 步驟 2(E24 判定統一)開始,它同時關閉 B2 的 bug 項,範圍最小且有現成復現步驟。
+- 地雷警告: 無
 
 ### 2026-07-26 23:20 [build] 使用工具: Claude Opus 5 (Claude Code)
 
