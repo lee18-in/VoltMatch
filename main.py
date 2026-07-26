@@ -247,9 +247,9 @@ class RVDSApp: # 定義主應用程式類別
 
         # 1. Circuit (Left)
         circuit_frame = ttk.LabelFrame(bottom_area, text="Circuit", padding=2) # 建立電路圖框架
-        circuit_frame.pack(side=tk.LEFT, padx=(0, 5), anchor="n") # 放置框架 (向上對齊，與 Solver / Notes 齊頭)
+        circuit_frame.pack(side=tk.LEFT, padx=(0, 5), anchor="n", fill="y") # 放置框架 (向上對齊並撐滿該列高度)
         self.circuit_canvas = ui_components.CircuitCanvas(circuit_frame, self.ui_colors, self.app_font, bg="white", highlightthickness=0) # 建立畫布 (尺寸由 draw_circuit 依字型度量自動決定)
-        self.circuit_canvas.pack() # 放置畫布
+        self.circuit_canvas.pack(fill=tk.BOTH, expand=True) # 放置畫布 (填滿框架，電路圖會依實際高度伸展)
         self.circuit_canvas.draw_circuit(self.r_hi_mode.get()) # 初始繪製 # 呼叫繪製電路圖函數
 
         # 1.5 Compact Solver (Middle) - 固定寬度，不隨視窗拉伸
