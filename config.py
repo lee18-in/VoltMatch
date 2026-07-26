@@ -5,7 +5,7 @@ C_GREEN = "#C0FFC0"     # Light Green
 C_YELLOW = "#FFFFC0"    # Light Yellow
 C_RED = "#FFC0C0"       # Light Red
 C_PURPLE = "#FFC0FF"    # Light Purple
-FONTSIZE = 12           # 預設字型大小
+FONTSIZE = 10           # 預設字型大小
 
 # UI 區塊配色方案 (字體/線條)
 UI_COLORS = {
@@ -21,8 +21,8 @@ PRECISION_DIGITS = 4    # 精度設定：用於浮點數比對的位數
 H_TITLE = "VoltMatch - Voltage Divider Optimizer - by lee18.in - Ver. 26.0526.1"
 MAX_TOLERANCE = 5       # 最大容差限制 %
 MIN_TOLERANCE = 0.00001 # 最小容差限制 %
-WINDOWS_SIZE = "1800x1000" # 主視窗
-MIN_WINDOW_SIZE = (1800, 1000) # 主視窗最小尺寸 (寬, 高)；高度下限來自左欄控制項的自然高度(實測約 648px)，再縮會裁掉 About 按鈕
+WINDOWS_SIZE = "1680x1000" # 主視窗
+MIN_WINDOW_SIZE = (1680, 1000) # 主視窗最小尺寸 (寬, 高)；高度下限來自左欄控制項的自然高度(實測約 648px)，再縮會裁掉 About 按鈕
 
 # UI 預設參數
 DEFAULT_V_REF = 3.3       # 預設參考電壓
