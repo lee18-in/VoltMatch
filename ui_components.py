@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import tkinter as tk
 from tkinter import ttk, messagebox
+from tkinter import font as tkfont
 import platform
 import config
 
@@ -240,56 +241,89 @@ class CompactSolverFrame(ttk.LabelFrame):
 # 🎨 電路圖繪製畫布 (Circuit Canvas)
 # ==============================================================================
 class CircuitCanvas(tk.Canvas):
+    PAD = 4          # 畫布四周留白
+    ZIGZAG = 8       # 電阻鋸齒左右擺幅
+    TEXT_GAP = 10    # 標籤與導線的水平間距
+    GND_HALF = 15    # 接地符號最寬的半寬
+    TERM_HALF = 20   # 頂端端子橫線的半寬
+
     def __init__(self, parent, ui_colors, app_font, **kwargs):
         super().__init__(parent, **kwargs)
         self.ui_colors = ui_colors
         self.app_font = app_font
+        # 同一個字級在各作業系統的實際像素寬高不同，改用字型度量推算版面，避免標籤被畫布裁掉
+        self.node_font = tkfont.Font(family=app_font[0], size=max(9, config.FONTSIZE - 2), weight="bold")
+        self.label_font = tkfont.Font(family=app_font[0], size=max(8, config.FONTSIZE - 3), weight="bold")
 
     def draw_circuit(self, r_hi_mode):
-        """ 繪製動態電路圖 (ANSI Zigzag Style) """
+        """ 繪製動態電路圖 (ANSI Zigzag Style)，尺寸依實際字型度量計算 """
         self.delete("all") # 清除畫布
-        w = 60  # 設定寬度變數
-        cx = w // 2 # 計算中心 x 座標
         line_width = 2 # 設定線條寬度
         default_color = self.ui_colors["line"] # 設定預設顏色
-        
+
+        node_h = self.node_font.metrics("linespace") # 節點標籤 (V_Target / V_Ref) 行高
+        label_h = self.label_font.metrics("linespace") # 電阻標籤行高
+        # 主幹導線 x 座標：左側需容納最寬的符號，以及置中繪製的 V_Target 標籤半寬
+        cx = self.PAD + max(self.TERM_HALF, self.GND_HALF, self.ZIGZAG, self.node_font.measure("V_Target") // 2 + 2)
+        r_h = max(30, label_h * 2) # 單顆電阻高度 (雙電阻模式)
+        mid_gap = max(20, label_h + 8) # V_Ref 節點上下的導線總長
+        hi_span = r_h * 2 + 10 # R_Hi 區段的最大高度 (雙電阻模式)，用來固定畫布高度避免切換模式時抖動
+
         def draw_resistor(x, y, h, label, color): # 內部函數：繪製電阻
             seg = h / 6 # 計算區段高度
-            ww = 8 # 設定鋸齒寬度
+            ww = self.ZIGZAG # 設定鋸齒寬度
             coords = [
                 x, y, x, y, x+ww, y+seg*1, x-ww, y+seg*2, x+ww, y+seg*3,
                 x-ww, y+seg*4, x+ww, y+seg*5, x, y+seg*6, x, y+h
             ]
             self.create_line(coords, width=line_width, fill=color, capstyle=tk.ROUND, joinstyle=tk.ROUND)
-            self.create_text(x+10, y+h/2+10, text=label, anchor="w", font=(self.app_font[0], 9, "bold"), fill=color)
+            self.create_text(x+self.TEXT_GAP, y+h/2, text=label, anchor="w", font=self.label_font, fill=color) # 標籤垂直置中於電阻
 
         # 1. Top Node (V_Target)
-        self.create_text(cx, 15, text="V_Target", font=(self.app_font[0], 10, "bold"), fill=self.ui_colors["target"])
-        self.create_line(cx, 25, cx, 40, width=line_width, fill=self.ui_colors["target"])
-        self.create_line(cx-20, 25, cx+ 20, 25, width=line_width, fill=self.ui_colors["target"])
+        top_y = self.PAD + node_h / 2 # 標題文字中心
+        term_y = self.PAD + node_h + 4 # 端子橫線
+        self.create_text(cx, top_y, text="V_Target", font=self.node_font, fill=self.ui_colors["target"])
+        self.create_line(cx-self.TERM_HALF, term_y, cx+self.TERM_HALF, term_y, width=line_width, fill=self.ui_colors["target"])
+        hi_y = term_y + 15 # R_Hi 起點
+        self.create_line(cx, term_y, cx, hi_y, width=line_width, fill=self.ui_colors["target"])
 
         # 2. R_Hi Section
         if r_hi_mode == "Disable": # 若為單電阻模式
-            draw_resistor(cx, 40, 40, "R_Hi1", self.ui_colors["hi"])
-            current_y = 80
+            single_h = int(r_h * 4 / 3) # 單顆時拉高，維持與雙電阻模式相近的整體高度
+            draw_resistor(cx, hi_y, single_h, "R_Hi1", self.ui_colors["hi"])
+            current_y = hi_y + single_h
         else: # 若為雙電阻模式
-            draw_resistor(cx, 40, 30, "R_Hi1", self.ui_colors["hi"])
-            self.create_line(cx, 70, cx, 80, width=line_width, fill=self.ui_colors["hi"])
-            draw_resistor(cx, 80, 30, "R_Hi2", self.ui_colors["hi"])
-            current_y = 110
+            draw_resistor(cx, hi_y, r_h, "R_Hi1", self.ui_colors["hi"])
+            self.create_line(cx, hi_y+r_h, cx, hi_y+r_h+10, width=line_width, fill=self.ui_colors["hi"])
+            draw_resistor(cx, hi_y+r_h+10, r_h, "R_Hi2", self.ui_colors["hi"])
+            current_y = hi_y + hi_span
 
         # 3. Middle Node (V_Ref) & R_Low
-        self.create_line(cx, current_y, cx, current_y+20, width=line_width, fill=self.ui_colors["ref"])
-        self.create_line(cx, current_y+10, cx+40, current_y+10, width=line_width, fill=self.ui_colors["ref"])
-        self.create_text(cx+10, current_y+18, text="V_Ref", anchor="w", font=(self.app_font[0], 10, "bold"), fill=self.ui_colors["ref"])
-        draw_resistor(cx, current_y+20, 40, "R_Low", self.ui_colors["low"])
-        
+        tap_y = current_y + mid_gap / 2 # V_Ref 分接點
+        low_y = current_y + mid_gap # R_Low 起點
+        self.create_line(cx, current_y, cx, low_y, width=line_width, fill=self.ui_colors["ref"])
+        self.create_line(cx, tap_y, cx+self.TERM_HALF*2, tap_y, width=line_width, fill=self.ui_colors["ref"])
+        self.create_text(cx+self.TEXT_GAP, tap_y+node_h/2+2, text="V_Ref", anchor="w", font=self.node_font, fill=self.ui_colors["ref"]) # 置於分接線下方，避免與線重疊
+        low_h = int(r_h * 4 / 3) # R_Low 高度
+        draw_resistor(cx, low_y, low_h, "R_Low", self.ui_colors["low"])
+
         # 4. GND
-        gy = current_y + 60
+        gy = low_y + low_h # 接地符號起點
         self.create_line(cx, gy, cx, gy+10, width=line_width, fill=default_color)
-        self.create_line(cx-15, gy+10, cx+15, gy+10, width=line_width, fill=default_color)
+        self.create_line(cx-self.GND_HALF, gy+10, cx+self.GND_HALF, gy+10, width=line_width, fill=default_color)
         self.create_line(cx-10, gy+14, cx+10, gy+14, width=line_width, fill=default_color)
         self.create_line(cx-5, gy+18, cx+5, gy+18, width=line_width, fill=default_color)
+
+        # 以雙電阻模式 (最高) 為基準保留高度，單電阻模式僅底部留白，切換時版面不跳動
+        self._fit_to_content(hi_y + hi_span + mid_gap + low_h + 18 + line_width * 2 + self.PAD) # 18=接地符號高度，line_width*2 覆蓋線寬與圓角端點
+
+    def _fit_to_content(self, min_height):
+        """ 依繪製後的實際邊界調整畫布大小，讓標籤在任何字型下都不會被裁切 """
+        bbox = self.bbox("all")
+        if not bbox:
+            return
+        _, _, x1, y1 = bbox
+        self.configure(width=int(x1) + self.PAD, height=max(int(y1) + self.PAD, int(min_height)))
 
 # ==============================================================================
 # 📝 筆記區域 (Notes Frame)
