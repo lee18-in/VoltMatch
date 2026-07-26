@@ -3,10 +3,10 @@
 ## A. 目前狀態(每次交接必更新)
 
 - 目前階段: build
-- 最後更新: 2026-07-26 22:25 / 當時階段: build
-- 最新 commit: 見 git log(本次發版 tag: v26.0726.1)
-- 進行中任務: 不同作業系統的uiux相容 畫面顯示 字形排版調整 for 不同作業系統(已完成 Circuit 電路圖區塊)
-- 阻塞點: 等待新 session/新工具審閱本次 CircuitCanvas 改動(§2.1 禁止左手審右手)
+- 最後更新: 2026-07-26 22:55 / 當時階段: build
+- 最新 commit: 見 git log(已發版 tag: v26.0726.1;目前工作分支 `refactor/divider-math-core`,未推遠端)
+- 進行中任務: B3「核心計算邏輯 API 化」的第一步 — 分壓公式抽離至 `divider_math.py`(已完成,待審閱)。跨 OS UI 相容任務的 Circuit 電路圖區塊已完成。
+- 阻塞點: 等待新 session/新工具審閱(§2.1 禁止左手審右手),累積待審:CircuitCanvas 改動、tag 發版 workflow、本次 divider_math 抽離
 
 ## B. 規劃(規劃階段 [plan] 專屬區;狀態: 草稿 | 已定案)
 
@@ -28,6 +28,15 @@
 - [ ]
 
 ## C. 交接日誌(只追加,不刪改;最新在最上,每筆一個小節)
+
+### 2026-07-26 22:55 [build] 使用工具: Claude Opus 5 (Claude Code)
+
+- 分支: `refactor/divider-math-core`(未推遠端,使用者未指示 push)
+- 完成了什麼: 先做了一次「運算與 UI 解耦」現況審查,結論是單向依賴成立(calculation_worker 沒有 import tkinter),但有四處沒切乾淨:(1) 分壓公式在 UI 層有第二份實作 — `ui_components.CompactSolverFrame.calculate()` 內有四條反解;(2) 表示層概念滲入運算核心 — worker 的 status 訊息自帶顏色字串、`calculation_worker.py:60` 有純視覺用途的 `time.sleep(0.1)`;(3) 輸入契約隱性 — `params` 14 個 key 在 `main.py:422` 手工組裝、驗證留在 UI 層,且 `limit`(顯示筆數)會反過來驅動演算法收緊容差;(4) `config.py` / `utils.py` 領域邏輯與 UI 顏色、視窗尺寸混雜。
+  本次只處理第 (1) 點(其餘三點屬「放錯位置」但不會算錯,留待日後):新增零依賴模組 `divider_math.py`(不 import 任何東西,純量與 numpy 陣列皆可運算,便於日後搬到 Web/API),提供 `calc_v_out()`(正解本體,不做除零檢查,供向量化熱路徑使用)與四個帶保護的單點反解 `solve_v_out / solve_r_high / solve_r_low / solve_v_ref`(無解回傳 0.0,與原 Quick Solver 行為一致)。`ui_components.py` 的四條行內公式與 `calculation_worker.py:105` 的 `v_ref * (1 + hi_tot / rlow_all)` 均改為呼叫此模組,全庫已無第二份公式(grep 確認)。
+- 驗證紀錄: (a) 等價性測試:以重構前的原始行內邏輯為對照組,200,008 組隨機值 + 邊界值(各參數為 0、vout==vfb 使 ratio 為 0、極端量級)x 4 種求解目標 = 800,032 次比對,不一致 0 次;向量化正解以 50 萬元素陣列比對,與原式「逐位元相同」(np.array_equal 為 True)。(b) 端對端:xvfb 啟動實際 App,Quick Solver 四種目標互解 3.3V/100Ω/2382.42Ω/81.92V 皆回到原值,R_Low=0 時顯示 0 且不拋例外;完整 worker 搜尋跑通(結果 2 筆,最佳解誤差 0.097656%),並用 divider_math 手動覆算 Vout 相符。
+- 下一個 agent 該做什麼: 本次改動需要審閱:(1) `divider_math.solve_*` 的除零/無解防護是否與重構前的 guard 條件完全等價(特別是 `solve_r_low` 在 v_ref==0 時的短路行為,原本靠 `and` 短路避免 ZeroDivisionError);(2) `calc_v_out` 刻意不做除零保護,需確認 `calculation_worker.py:24` 的 `r_low_rng[r_low_rng > 0]` 過濾確實是唯一入口、不會有 0 值漏進向量化路徑;(3) `divider_math.py` 的「零依賴」性質是否值得寫成硬規則(目前只在 docstring 註明),避免日後有人 import config 破壞可移植性。
+- 地雷警告: 無
 
 ### 2026-07-26 22:25 [build] 使用工具: Claude Opus 5 (Claude Code)
 

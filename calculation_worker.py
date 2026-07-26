@@ -4,6 +4,7 @@ import traceback
 import numpy as np
 import config
 import utils
+import divider_math
 
 def worker_calculation(p, msg_queue): # 背景計算函數
     """ 子執行緒：Numpy 運算與原生 Python 資料處理 """ # 函數說明
@@ -102,7 +103,7 @@ def worker_calculation(p, msg_queue): # 背景計算函數
             rlow_all = np.concatenate(valid_rlow) # 合併所有 R_Low
             hi_tot = flat[idx_all] # 取得對應的 R_Hi 總和
             
-            vouts = p['v_ref'] * (1 + hi_tot / rlow_all) # 計算輸出電壓
+            vouts = divider_math.calc_v_out(p['v_ref'], hi_tot, rlow_all) # 計算輸出電壓 (與 Quick Solver 共用同一份公式)
             errs = np.abs((vouts - p['v_target']) / p['v_target']) * 100 # 計算誤差百分比
             
             # [Optimization] 使用 NumPy 進行向量化去重與計算
