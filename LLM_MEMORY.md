@@ -3,10 +3,10 @@
 ## A. 目前狀態(每次交接必更新)
 
 - 目前階段: build
-- 最後更新: 2026-07-26 23:05 / 當時階段: build
+- 最後更新: 2026-07-26 23:20 / 當時階段: build
 - 最新 commit: 見 git log(已發版 tag: v26.0726.1;目前工作分支 `refactor/divider-math-core`,未推遠端)
 - 進行中任務: B3「核心計算邏輯 API 化」的第一步 — 分壓公式抽離至 `divider_math.py`(已完成,使用者審閱通過,待合併)。跨 OS UI 相容任務的 Circuit 電路圖區塊已完成。
-- 阻塞點: 無(divider_math 已通過審閱;合併與 push 待使用者指示)
+- 阻塞點: 無。待決事項:23:20 交接日誌記錄的三項解耦待辦(含一個已復現的 E24_Count bug)是否納入計畫,需使用者裁示;分支 `refactor/divider-math-core` 合併回 main 的時機亦待指示。
 
 ## B. 規劃(規劃階段 [plan] 專屬區;狀態: 草稿 | 已定案)
 
@@ -28,6 +28,28 @@
 - [ ]
 
 ## C. 交接日誌(只追加,不刪改;最新在最上,每筆一個小節)
+
+### 2026-07-26 23:20 [build] 使用工具: Claude Opus 5 (Claude Code)
+
+- 完成了什麼: 第二次「運算與 UI 解耦」現況審查(比 22:55 那次更深)。確認 22:55 抽離的 `divider_math.py` 已切乾淨(全庫 grep 無第二份分壓公式,模組維持零 import);同時挖出一個先前漏掉、且已在產生錯誤畫面的重複實作。以下三項是審查產出的待辦提案,依建議順序排列。**本筆僅為 [build] 階段的留言提案,未寫入〈B. 規劃〉區(該區為 [plan] 專屬,建置階段不得改計畫);是否納入計畫由使用者裁示。**
+
+  **(1) [Bug,優先] E24 標準值判定有兩份實作且結果不一致**
+  - 兩處判定:`calculation_worker.py:128-131` 用 `np.isin(值, e24_full_list)`(完整清單比對);`utils.py:51` `determine_r_color()` 用尾數 `int(round(mantissa*100)) in E24_SIGS`(有效數字比對)。
+  - 實測 799 個標準電阻值,只有 `0` 這個值兩法不一致:worker 判 True、顯示層判 False(走 `val <= 0` 回 C_RED)。根因是 `config.E24_BASE` / `E96_BASE` 的最後一個元素是 `0`,使 `0` 進了電阻表。
+  - 使用者可見的後果:單電阻(Disable)模式下 `r_hi2_rng = [0.0]`,每一列的 `E24_Count` 都比畫面上實際的綠色格子多 1。實測範例:R_Low=10000/R_Hi1=240000/R_Hi2=0 → worker 算 E24_Count=3,畫面綠格只有 2。
+  - 建議修法:抽出一個「回傳 E 系列分類、不回傳顏色」的共用函式供兩邊使用,顏色映射留在 UI;並順帶決定 `0` 是否算標準值。
+
+  **(2) 拆 `utils.py` / `config.py` 的職責**
+  - 已查明每個 utils 函式的呼叫者「零重疊」,可機械拆分:`get_resistor_list` → core(僅 calculation_worker 用);`fmt_rkm` / `determine_r_color` / `calc_gradient_hex` → presentation(僅 main 用);`get_resource_path` → packaging(僅 main 用)。
+  - core 的邊界已可精確畫出:`divider_math` + `get_resistor_list` + config 的 7 個領域常數(E24_BASE、E96_BASE、PRECISION_DIGITS、MAX_TOLERANCE、MIN_TOLERANCE、WORKER_CHUNK_SIZE、WORKER_MAX_RETRY)。已確認 calculation_worker 用到的 config 名字「零個是 UI 常數」,且 UI 層完全沒碰 E24_BASE / get_resistor_list。
+  - config.py 目前把領域常數與 WINDOWS_SIZE / FONTSIZE / UI_COLORS / SHEET_COLUMN_WIDTHS 混在同一檔,需一併切開。
+
+  **(3) 訊息格式與輸入契約(動靜最大,建議最後做)**
+  - worker 的 status 訊息自帶顏色字串 `("status", (text, "blue"/"orange"/"purple"))`,顏色是 UI 決策卻由運算層決定;`calculation_worker.py:60` 有純視覺用途的 `time.sleep(0.1)`。搬到 Web/API 都必須丟掉。
+  - `params` 14 個 key 在 `main.py:422` 手工組裝,無 schema/dataclass/預設值;驗證邏輯留在 UI 層(`main.py:360` `validate_input` 直接寫回 `tk_var`,與 widget 綁死);且 `limit`(顯示筆數上限)會反過來驅動 `calculation_worker.py:142-160` 收緊容差,等於展示需求控制了演算法行為。
+  - 回報格式 `("status"|"error"|"update_tol"|"success", data)` 是隱含形狀的 tuple,換 WebWorker postMessage / SSE 時無 schema 可複用。
+- 下一個 agent 該做什麼: 本筆為純文件記錄,未改動任何程式碼,不需審閱。若使用者指示動手,建議從 (1) 開始 — 它是 bug 不是重構,範圍小且有實測復現步驟。
+- 地雷警告: 無
 
 ### 2026-07-26 23:05 [build] 審閱結論 / 審閱者: 使用者本人
 
