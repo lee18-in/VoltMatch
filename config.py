@@ -18,7 +18,7 @@ UI_COLORS = {
 
 # 全域常數
 PRECISION_DIGITS = 4    # 精度設定：用於浮點數比對的位數
-H_TITLE = "VoltMatch - Voltage Divider Optimizer - by lee18.in - Ver. 26.0526.1"
+H_TITLE = "VoltMatch - Voltage Divider Optimizer - by lee18.in - Ver. 26.0726.1"
 MAX_TOLERANCE = 5       # 最大容差限制 %
 MIN_TOLERANCE = 0.00001 # 最小容差限制 %
 WINDOWS_SIZE = "1680x1000" # 主視窗

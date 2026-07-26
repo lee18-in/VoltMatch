@@ -71,21 +71,22 @@ pip install numpy tksheet
 
 If you intend to bundle this application into a standalone executable using tools like **PyInstaller** or **Nuitka**, please ensure that the `CREDITS.txt` file is placed in the same directory as the executable (or properly bundled into the resource path). Otherwise, the "About" window may fail to display the correct developer and open-source acknowledgments.
 
-## � Download GitHub Actions Artifacts
+## ⬇️ Download
 
-When the GitHub Actions workflow runs, the generated packages are attached as workflow artifacts:
+Prebuilt packages for each tagged version are published on the **Releases** page:
 
-- `voltmatch-windows-exe` → contains `dist/VoltMatch.exe`
-- `voltmatch-linux-appimage` → contains `VoltMatch-x86_64.AppImage`
+### 👉 [https://github.com/lee18-in/VoltMatch/releases/latest](https://github.com/lee18-in/VoltMatch/releases/latest)
 
-To download them:
+| Platform | File | Notes |
+| --- | --- | --- |
+| Windows | `VoltMatch.exe` | Standalone executable, no installation required. |
+| Linux | `VoltMatch-x86_64.AppImage` | Run `chmod +x VoltMatch-x86_64.AppImage` before launching. |
 
-1. Open the GitHub repository page.
-2. Go to the latest workflow run under **Actions**.
-3. Select the completed workflow run.
-4. Click **Artifacts** and download the package you need.
+### Development builds
 
-## �📜 License & Credits
+Every push to `main` also builds both packages as workflow artifacts (`voltmatch-windows-exe` / `voltmatch-linux-appimage`). To download them, open the repository's **Actions** tab, select the latest completed workflow run, and download the package from the **Artifacts** section. Note that artifacts expire after GitHub's retention period, while Releases are permanent.
+
+## 📜 License & Credits
 
 - **Author:** Andy Lee (lee18.in)
 - **License:** MIT License
