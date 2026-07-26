@@ -254,9 +254,28 @@ class CircuitCanvas(tk.Canvas):
         # 同一個字級在各作業系統的實際像素寬高不同，改用字型度量推算版面，避免標籤被畫布裁掉
         self.node_font = tkfont.Font(family=app_font[0], size=max(9, config.FONTSIZE - 2), weight="bold")
         self.label_font = tkfont.Font(family=app_font[0], size=max(8, config.FONTSIZE - 3), weight="bold")
+        self._mode = None # 目前的 R_Hi 模式，供尺寸變動時重繪使用
+        self._last_size = None # 上次重繪時的畫布尺寸，避免 Configure 事件重複觸發
+        self.bind("<Configure>", self._on_resize) # 畫布被拉伸時重繪，讓電路圖填滿可用空間
 
     def draw_circuit(self, r_hi_mode):
         """ 繪製動態電路圖 (ANSI Zigzag Style)，尺寸依實際字型度量計算 """
+        self._mode = r_hi_mode
+        self._render()
+
+    def _on_resize(self, event):
+        """ 畫布尺寸改變時重繪 (例如視窗縮放或底部區塊高度變動) """
+        if self._mode is None:
+            return
+        size = (event.width, event.height)
+        if size == self._last_size: # 尺寸沒變就不重繪，避免與 _fit_to_content 互相觸發
+            return
+        self._last_size = size
+        self._render()
+
+    def _render(self):
+        """ 依目前模式與可用空間實際繪製 """
+        r_hi_mode = self._mode
         self.delete("all") # 清除畫布
         line_width = 2 # 設定線條寬度
         default_color = self.ui_colors["line"] # 設定預設顏色
@@ -265,9 +284,30 @@ class CircuitCanvas(tk.Canvas):
         label_h = self.label_font.metrics("linespace") # 電阻標籤行高
         # 主幹導線 x 座標：左側需容納最寬的符號，以及置中繪製的 V_Target 標籤半寬
         cx = self.PAD + max(self.TERM_HALF, self.GND_HALF, self.ZIGZAG, self.node_font.measure("V_Target") // 2 + 2)
+        term_y = self.PAD + node_h + 4 # 端子橫線
+        hi_y = term_y + 15 # R_Hi 起點
+        gnd_span = 18 + line_width * 2 + self.PAD # 接地符號高度 + 線寬圓角 + 底部留白
+
         r_h = max(30, label_h * 2) # 單顆電阻高度 (雙電阻模式)
         mid_gap = max(20, label_h + 8) # V_Ref 節點上下的導線總長
-        hi_span = r_h * 2 + 10 # R_Hi 區段的最大高度 (雙電阻模式)，用來固定畫布高度避免切換模式時抖動
+        low_h = int(r_h * 4 / 3) # R_Low 高度
+        single_h = low_h # 單電阻模式下 R_Hi1 的高度
+        dual_span = r_h * 2 + 10 # 雙電阻模式的 R_Hi 區段高度 (含兩顆之間的導線)
+        hi_natural = single_h if r_hi_mode == "Disable" else dual_span # 目前模式下 R_Hi 區段的自然高度
+
+        # 目前模式的自然高度；畫布被拉伸得更高時，把多出來的空間分配給電阻與節點間距，讓電路圖填滿整塊區域
+        natural_h = hi_y + hi_natural + mid_gap + low_h + gnd_span
+        # 請求高度一律以雙電阻模式 (較高者) 為準，單/雙電阻切換時外層不會跟著改變高度
+        request_h = hi_y + dual_span + mid_gap + low_h + gnd_span
+        elastic = hi_natural + mid_gap + low_h # 可伸縮的部分 (文字與接地符號不縮放)
+        avail = self.winfo_height() # 尚未 map 時為 1，此時不做伸展
+        if avail > natural_h and elastic > 0:
+            stretch = (elastic + avail - natural_h) / elastic
+            r_h = int(r_h * stretch)
+            single_h = int(single_h * stretch)
+            mid_gap = int(mid_gap * stretch)
+            low_h = int(low_h * stretch)
+        hi_span = r_h * 2 + 10 # 拉伸後的 R_Hi 區段高度 (雙電阻模式)
 
         def draw_resistor(x, y, h, label, color): # 內部函數：繪製電阻
             seg = h / 6 # 計算區段高度
@@ -281,15 +321,12 @@ class CircuitCanvas(tk.Canvas):
 
         # 1. Top Node (V_Target)
         top_y = self.PAD + node_h / 2 # 標題文字中心
-        term_y = self.PAD + node_h + 4 # 端子橫線
         self.create_text(cx, top_y, text="V_Target", font=self.node_font, fill=self.ui_colors["target"])
         self.create_line(cx-self.TERM_HALF, term_y, cx+self.TERM_HALF, term_y, width=line_width, fill=self.ui_colors["target"])
-        hi_y = term_y + 15 # R_Hi 起點
         self.create_line(cx, term_y, cx, hi_y, width=line_width, fill=self.ui_colors["target"])
 
         # 2. R_Hi Section
         if r_hi_mode == "Disable": # 若為單電阻模式
-            single_h = int(r_h * 4 / 3) # 單顆時拉高，維持與雙電阻模式相近的整體高度
             draw_resistor(cx, hi_y, single_h, "R_Hi1", self.ui_colors["hi"])
             current_y = hi_y + single_h
         else: # 若為雙電阻模式
@@ -304,7 +341,6 @@ class CircuitCanvas(tk.Canvas):
         self.create_line(cx, current_y, cx, low_y, width=line_width, fill=self.ui_colors["ref"])
         self.create_line(cx, tap_y, cx+self.TERM_HALF*2, tap_y, width=line_width, fill=self.ui_colors["ref"])
         self.create_text(cx+self.TEXT_GAP, tap_y+node_h/2+2, text="V_Ref", anchor="w", font=self.node_font, fill=self.ui_colors["ref"]) # 置於分接線下方，避免與線重疊
-        low_h = int(r_h * 4 / 3) # R_Low 高度
         draw_resistor(cx, low_y, low_h, "R_Low", self.ui_colors["low"])
 
         # 4. GND
@@ -314,16 +350,19 @@ class CircuitCanvas(tk.Canvas):
         self.create_line(cx-10, gy+14, cx+10, gy+14, width=line_width, fill=default_color)
         self.create_line(cx-5, gy+18, cx+5, gy+18, width=line_width, fill=default_color)
 
-        # 以雙電阻模式 (最高) 為基準保留高度，單電阻模式僅底部留白，切換時版面不跳動
-        self._fit_to_content(hi_y + hi_span + mid_gap + low_h + 18 + line_width * 2 + self.PAD) # 18=接地符號高度，line_width*2 覆蓋線寬與圓角端點
+        self._fit_to_content(request_h)
 
-    def _fit_to_content(self, min_height):
-        """ 依繪製後的實際邊界調整畫布大小，讓標籤在任何字型下都不會被裁切 """
+    def _fit_to_content(self, natural_h):
+        """ 依繪製後的實際邊界調整畫布請求尺寸，讓標籤在任何字型下都不會被裁切
+
+        高度一律請求「自然高度」而非拉伸後的高度：實際高度由 pack 的 fill 決定，
+        若這裡回報拉伸後的高度會讓外層越撐越大，形成無限放大的迴圈。
+        """
         bbox = self.bbox("all")
         if not bbox:
             return
-        _, _, x1, y1 = bbox
-        self.configure(width=int(x1) + self.PAD, height=max(int(y1) + self.PAD, int(min_height)))
+        _, _, x1, _ = bbox
+        self.configure(width=int(x1) + self.PAD, height=int(natural_h))
 
 # ==============================================================================
 # 📝 筆記區域 (Notes Frame)
