@@ -22,6 +22,7 @@ H_TITLE = "VoltMatch - Voltage Divider Optimizer - by lee18.in - Ver. 26.0526.1"
 MAX_TOLERANCE = 5       # 最大容差限制 %
 MIN_TOLERANCE = 0.00001 # 最小容差限制 %
 WINDOWS_SIZE = "1100x720" # 主視窗
+MIN_WINDOW_SIZE = (900, 680) # 主視窗最小尺寸 (寬, 高)；高度下限來自左欄控制項的自然高度(實測約 648px)，再縮會裁掉 About 按鈕
 
 # UI 預設參數
 DEFAULT_V_REF = 3.3       # 預設參考電壓
