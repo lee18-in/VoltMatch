@@ -3,10 +3,10 @@
 ## A. 目前狀態(每次交接必更新)
 
 - 目前階段: build
-- 最後更新: 2026-07-26 22:25 / 當時階段: build
-- 最新 commit: 見 git log(本次發版 tag: v26.0726.1)
+- 最後更新: 2026-07-29 17:33 / 當時階段: build
+- 最新 commit: 見 git log(最近發版 tag: v26.0726.1)
 - 進行中任務: 不同作業系統的uiux相容 畫面顯示 字形排版調整 for 不同作業系統(已完成 Circuit 電路圖區塊)
-- 阻塞點: 等待新 session/新工具審閱本次 CircuitCanvas 改動(§2.1 禁止左手審右手)
+- 阻塞點: 兩筆待審閱堆疊中,皆需新 session/新工具承接(§2.1 禁止左手審右手):(1) 2026-07-26 22:25 tag 發版 workflow;(2) 2026-07-29 17:33 .venv2 取消版控
 
 ## B. 規劃(規劃階段 [plan] 專屬區;狀態: 草稿 | 已定案)
 
@@ -28,6 +28,14 @@
 - [ ]
 
 ## C. 交接日誌(只追加,不刪改;最新在最上,每筆一個小節)
+
+### 2026-07-29 17:33 [build] 使用工具: Claude Opus 5 (Claude Code)
+
+- 完成了什麼: 把 `.venv2/` 移出版控。使用者刻意刪掉了本機的 `.venv2/` 虛擬環境目錄,但該目錄底下有 2225 個檔案(blob 合計 10.7 MB)當初被 commit 進 repo,導致 `git status` 整片顯示 deleted。改動:(1) `.gitignore` 第 29 行、原 `.venv/` 之後新增 `.venv*/`,一併涵蓋 `.venv2/`、`.venv-1/` 這類 VSCode Python Envs 擴充建立失敗時留下的變體目錄(原本只擋 `.venv/`);(2) `git rm -r --cached .venv2` 將 2225 個檔案自索引移除(檔案本來就已不在工作樹,此步只記錄刪除,不動任何現存檔案)。本次未觸碰任何程式碼、未 push。
+- 起因(環境問題,非專案問題): 使用者反映 VSCode 無法快速建立虛擬環境。診斷結果:(a) log 中大量 `ensurepip is not available` 是機器當時缺 `python3.12-venv`,現已安裝(3.12.3-1ubuntu0.15),建 venv 已正常;(b) `/usr/bin/python3: No module named pip` 是 Ubuntu 拆包 + PEP 668 的預期行為,非故障;(c) 「慢」的真因是機器沒裝 uv,Python Envs 擴充每次先探測 `uv --version` 失敗才退回 `python -m venv` + pip。已為使用者安裝 uv 0.12.0 至 `~/.local/bin`(純本機環境變更,不影響 repo)。
+- 驗證紀錄: `git check-ignore -v` 確認 `.venv2/` 與 `.venv/` 皆命中 `.gitignore:29:.venv*/`;暫存區內容核對為 2225 筆 D(全屬 `.venv2/`)+ 1 筆 M(`.gitignore`),無其他檔案被誤納;工作樹除 `.venv2/` 刪除外無其他變更。uv 安裝後 `uv --version` 與登入 shell `command -v uv` 均正常回應。
+- 下一個 agent 該做什麼: 本次改動需要審閱:(1) `.gitignore` 的 `.venv*/` 這個 glob 是否過寬,會不會誤擋到未來想納管的檔名(例如 `.venvrc`、`.venv.example` 之類——注意結尾斜線只匹配目錄,但仍請確認專案沒有以 `.venv` 開頭的目錄需要版控);(2) 確認 `git rm --cached` 只影響索引,遠端與其他開發者 pull 後會刪掉他們本機的 `.venv2/` 目錄(若有人正在用該環境會被移除,需評估是否要事先告知);(3) 這 10.7 MB 仍留在 git 歷史中,只有未來 commit 不再帶它,如需真正瘦身要 rewrite history(屬架構級決定,須使用者裁示)。另請注意:2026-07-26 22:25 那筆的審閱**尚未完成**,本次未代審(不同主題且§2.1 不允許),請一併處理。
+- 地雷警告: 遠端 `bin/VoltMatch.exe`(24MB 二進位)仍在版控中,會持續膨脹 repo;若要清掉需使用者裁示(屬架構級決定)。
 
 ### 2026-07-26 22:25 [build] 使用工具: Claude Opus 5 (Claude Code)
 
