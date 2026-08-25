@@ -1,7 +1,101 @@
 #!/bin/sh
-# 強制要求每次 commit 都要更新 LLM_MEMORY.md（見 AGENTS.md §0）；不留例外通道。
-if ! git diff --cached --name-only | grep -q '^LLM_MEMORY\.md$'; then
-  echo "錯誤：本次 commit 未包含 LLM_MEMORY.md 的變更。" >&2
+# 強制要求每次 commit 都要更新「管轄該異動檔案的那份 LLM_MEMORY.md」（見 AGENTS.md §0）；不留例外通道。
+#
+# 巢狀判定（對應 AGENTS.md §4「作用範圍僅限本檔所在目錄」）：
+#   對每個異動檔案，從它所在目錄往上找「最近的一個工作流根目錄」，該目錄的 LLM_MEMORY.md 就是管轄它的記憶檔。
+#   - **工作流根目錄的認定：該目錄同時存在 AGENTS.md 與 LLM_MEMORY.md 兩個檔案。**
+#     只有 LLM_MEMORY.md 而沒有 AGENTS.md 的目錄不算——否則範例／測試資料夾裡的一份樣本記憶檔
+#     就會變成管轄錨點，憑空對該目錄下所有 commit 多出要求。Playbook 導入時這兩檔一定成對出現，
+#     用「成對」當條件不會漏判真正的工作流。
+#   - 子目錄的異動只要求子目錄那份，不牽動上層；上層的異動也不會要求子目錄那份。
+#   - 同一 repo 內多層各有一套工作流時，彼此獨立、互不干擾。
+#   - 異動檔案往上都找不到工作流根目錄 → 不做要求，直接放行。
+# 因此本腳本不需要依專案修改，直接原文安裝即可。
+#
+# 已知限制與刻意接受的行為（不要誤以為已涵蓋，也不要當成 bug 去修）：
+#   1. 檔名內含 (a) 換行字元 (b) 半形雙引號 " (c) 反斜線 \ 三種不支援。
+#      (a) 是逐行讀取的先天限制；(b)(c) 即使關掉 core.quotePath，git 仍會輸出成引號跳脫形式。
+#      要完整支援得改用 --name-only -z，但 POSIX 的 read 沒有 -d 參數，成本不划算。
+#   2. 判定讀的是**工作樹**。若本次 commit 把某層的 AGENTS.md 或 LLM_MEMORY.md 刪掉，該層即不再是
+#      工作流根目錄，其下的異動改由上一層管轄（若有）。這是刻意的：工作流正在被拆除時，
+#      不應再要求它自己的記憶檔。
+#   3. 大量檔案的 commit 會有可感延遲（純 shell 逐層 stat）。已用「先收斂成不重複目錄清單」
+#      把成本從 O(檔案數×深度) 降為 O(不重複目錄數×深度)，同目錄下改幾千個檔案不再逐檔重走。
+#   4. **配對缺失時「靜默放行」，不會有任何警告**——這是上面「成對才算工作流根目錄」的代價。
+#      若某層只有 LLM_MEMORY.md 而沒有 AGENTS.md（匯入到一半中斷、或 AGENTS.md 被移除／改名），
+#      往上又找不到別的成對目錄，該處的異動就完全不受約束，且不像「被 .gitignore 忽略」那種
+#      情況還有可操作的錯誤訊息可循——因為根本不會進入檢查分支。
+#      判斷依據：漏擋一個尚未真正導入完成的目錄，代價低於「範例資料夾裡一份樣本記憶檔
+#      就讓整個目錄的 commit 全部卡死」。**導入完成的專案兩檔必定成對，不受此限制影響**；
+#      若發現某個目錄該受管卻沒被要求記憶檔，第一件事就是檢查該層 AGENTS.md 是否存在。
+
+# -c core.quotePath=false 不可移除：git 預設會把含非 ASCII 位元組的路徑輸出成
+# "dir/\346\270\254.md" 這種帶引號的八進位跳脫形式，前導的 " 會讓 ${f%/*} 取到錯誤的
+# 目錄名、往上找不到記憶檔，於是「誤判成上層管轄」或「靜默放行」——本 Playbook 的
+# 目標使用者多為中文筆記庫，這是常態而非邊角案例。
+dirs=$(
+  git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMRD |
+  while IFS= read -r f; do
+    d=${f%/*}
+    [ "$d" = "$f" ] && d="."
+    printf '%s\n' "$d"
+  done | sort -u
+)
+
+required=$(
+  printf '%s\n' "$dirs" | while IFS= read -r dir; do
+    [ -n "$dir" ] || continue
+    while :; do
+      if [ "$dir" = "." ]; then
+        agents="AGENTS.md"; mem="LLM_MEMORY.md"
+      else
+        agents="$dir/AGENTS.md"; mem="$dir/LLM_MEMORY.md"
+      fi
+      if [ -f "$agents" ] && [ -f "$mem" ]; then
+        printf '%s\n' "$mem"
+        break
+      fi
+      [ "$dir" = "." ] && break
+      parent=${dir%/*}
+      [ "$parent" = "$dir" ] && parent="."
+      dir="$parent"
+    done
+  done | sort -u
+)
+
+[ -z "$required" ] && exit 0
+
+missing=""
+blocked=""
+oldifs=$IFS
+IFS='
+'
+for m in $required; do
+  [ -n "$(git diff --cached --name-only -- "$m")" ] && continue
+  # 被 .gitignore 忽略且尚未納入版控的記憶檔，git add 會直接拒絕，
+  # 配上 AGENTS.md §4 禁用 --no-verify 就是死鎖——這種情況要給可操作的訊息，不能只說「沒包含」。
+  if git check-ignore -q "$m" 2>/dev/null && ! git ls-files --error-unmatch "$m" >/dev/null 2>&1; then
+    blocked="$blocked  - $m
+"
+  else
+    missing="$missing  - $m
+"
+  fi
+done
+IFS=$oldifs
+
+if [ -n "$blocked" ]; then
+  echo "錯誤：下列 LLM_MEMORY.md 被 .gitignore 忽略且未納入版控，永遠無法進入 staged：" >&2
+  printf '%s' "$blocked" >&2
+  echo "這會讓該目錄底下的每一筆 commit 都被永久擋下。請把它移出 .gitignore——" >&2
+  echo "工作流的記憶檔本來就該入版控；若那只是一份範例檔，請一併移除同目錄的 AGENTS.md，" >&2
+  echo "該目錄就不再被視為工作流根目錄。" >&2
+  exit 1
+fi
+
+if [ -n "$missing" ]; then
+  echo "錯誤：本次 commit 未包含下列 LLM_MEMORY.md 的變更：" >&2
+  printf '%s' "$missing" >&2
   echo "請先依 AGENTS.md §0 更新〈交接日誌〉與〈目前狀態〉再 commit。" >&2
   exit 1
 fi

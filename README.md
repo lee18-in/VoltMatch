@@ -1,5 +1,8 @@
 <!-- AI AGENTS: Read ./AGENTS.md first, then ./LLM_MEMORY.md.
      Do NOT write planning content into this file. -->
+
+> - **Language and Encoding Standards**: All system files, code annotations, memory files (`LLM_MEMORY.md`), and handover logs for this project are uniformly encoded in **UTF-8** and **Traditional Chinese** by default.
+
 # ⚡ VoltMatch
 
 **A Professional Voltage Divider Optimizer for Hardware Engineers**
