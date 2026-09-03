@@ -1,16 +1,22 @@
 # LLM_MEMORY.md — 工作記憶(agent 讀寫;規則見 AGENTS.md,勿在此重複)
 
-> 📌 **每個 session 開始時先讀 [`COMPONENT_MAP.md`](./COMPONENT_MAP.md)**(約 3k token,開頭有〈六十秒進入狀況〉)。分工:**本檔記會衰減的**(現在做到哪、下一步、交接流水帳);**COMPONENT_MAP.md 記不衰減的**(專案長怎樣、為什麼這樣決定、驗證過什麼、環境有什麼隱性條件)。
+> 📌 **本專案有三份記憶檔,每個 session 開始時都要讀**(見 `AGENTS.md` §0〈三份檔案的分工〉):
 >
-> ⚠️ **封存本檔任何一筆交接日誌前**,先把該筆裡「以後還會用到的事實」——決策理由、否決過的方案、環境特性、驗證結果——萃取進 `COMPONENT_MAP.md` 對應章節,**再**封存。不做這步,每次封存都是在丟知識(§0 防膨脹規則會讓日誌隨時間離開視線,但那些事實兩年後依然有效)。
+> | 檔案 | 存什麼 |
+> |---|---|
+> | `AGENTS.md` | 規則(不變) |
+> | **本檔 `LLM_MEMORY.md`** | **會衰減的**:目前狀態、下一步、交接事件流水帳 |
+> | [`COMPONENT_MAP.md`](./COMPONENT_MAP.md) | **不衰減的**:專案結構與跨模組契約、決策理由、環境條件、驗證台帳。開頭有〈六十秒進入狀況〉,先讀它最快上手 |
+>
+> ⚠️ **寫日誌時就分流**:本檔只記「做了什麼」;「為什麼這樣決定／試過什麼不行／驗證了什麼」當場寫進 `COMPONENT_MAP.md`。本檔日誌會被封存,那些事實卻不會過期——寫錯地方等於預約遺失。單筆日誌上限約 1200 bytes。
 
 ## A. 目前狀態(每次交接必更新)
 
 - 目前階段: build
-- 最後更新: 2026-09-03 12:04 / 當時階段: build
+- 最後更新: 2026-09-03 18:04 / 當時階段: build
 - 交接基準 commit: 0e0176e [maintain] 移除版控執行檔
 - 進行中任務: 不同作業系統的uiux相容 畫面顯示 字形排版調整 for 不同作業系統(已完成 Circuit 電路圖區塊)
-- 阻塞點: 兩筆待審閱堆疊中,皆需新 session/新工具承接(§2.1 禁止左手審右手):(1) 2026-07-26 22:25 tag 發版 workflow;(2) 2026-07-29 17:33 .venv2 取消版控
+- 阻塞點: 三筆待審閱堆疊中,皆需新 session/新工具承接(§2.1 禁止左手審右手):(1) 2026-09-03 18:04 AGENTS.md 升級 Playbook v10;(2) 2026-07-26 22:25 tag 發版 workflow;(3) 2026-07-29 17:33 .venv2 取消版控
 
 ## B. 規劃(規劃階段 [plan] 專屬區;狀態: 草稿 | 已定案)
 
@@ -32,51 +38,11 @@
 - [ ]
 
 ## C. 交接日誌(只追加,不刪改;最新在最上,每筆一個小節)
+### 2026-09-03 18:04 [build] 使用工具: Claude Opus 5 (Claude Code)
 
-### 2026-09-03 12:04 [build] 使用工具: Claude Opus 5 (Claude Code)
-
-- 完成了什麼: 依使用者指示「打掉重構」`COMPONENT_MAP.md`。使用者釐清真正目標不是「記錄物件用法」,而是**讓 LLM 快速進入狀況、換不同 LLM 不失憶**。據此重新設計:該檔不再是介面對照表,改定位為**不衰減層知識庫**——只存「程式碼裡沒有、且不隨時間失效」的知識;`LLM_MEMORY.md` 則維持**衰減層**(現在做到哪、交接流水帳)。新結構 8 節:§1 六十秒進入狀況(專案是什麼、執行/打包指令、五個檔各自職責與行數、最該先知道的三件事)、§2 模組關聯圖、§3 唯一的執行緒邊界(dict-in/queue-out 完整契約)、§4 否定性事實、§5 config.py 影響面、**§6 決策與否決紀錄(新增)**、**§7 環境現場知識(新增)**、**§8 驗證台帳(新增)**。§6/§7/§8 的內容全部從既有交接日誌萃取而來,未新增未經證實的說法。
-- 為什麼這樣分: 三類知識的性質完全不同——「物件用法」推導成本極低(讀原始碼 30 秒且 100% 正確)但腐爛最快,故不記,只記簽章看不出來的約束(如「少一個 key 就 KeyError,worker 無預設值保護」);「物件關聯」推導成本高(要同時讀多個檔)但腐爛慢,值得記;「驗證狀態」讀再多程式碼也推不出來(推導成本無限大)且不腐爛,必須記。另修正上一版的一個錯誤判斷:上一版把「每個物件一個 ✅/❌」整欄刪掉,理由是「重複值多、資訊密度低」——那是拿壓縮率當標準。實際上「這個物件從沒被跑過」對 agent 有決策價值。但正確形式是**行為 × 環境**的台帳(§8),不是物件層級的符號欄,因為物件層級的 ✅ 會給假安全感(`fmt_rkm` 測過 `2K2` 不代表 `None`/邊界也測過)。
-- 關鍵設計理由(防失憶): `AGENTS.md` §0 規定交接日誌滿 20 筆要壓縮封存、再長搬去 `ARCHIVE.md`(不在強制閱讀清單)。這代表**所有驗證紀錄、決策理由、環境知識最終都會隨日誌老化而離開視線**。例如「使用者環境 tk scaling≈2.0,左欄自然高度實際約 792px」這條珍貴的環境事實,目前埋在 2026-07-26 那筆的「追加(21:58)」裡,一旦封存就等於消失。因此在本檔開頭與 `COMPONENT_MAP.md` 開頭都寫死了**萃取規則**:封存任何一筆日誌前,先把該筆裡「以後還會用到的事實」搬進 `COMPONENT_MAP.md` 對應章節,再封存。台帳不是日誌的複本,是日誌的萃取物——兩者生命週期不同。
-- 同時撤回上一版的一個決定: 上一版把本檔開頭指標從「先讀」改為「條件式讀」,理由是避免無條件佔用上下文。本次**改回每 session 必讀**,因為該檔內容性質已變——它現在是新 LLM 進入狀況的主要入口(含六十秒摘要),條件式觸發會讓新 LLM 讀不到。成本約 3k token,換掉的是重複踩坑與重複提出已否決方案的代價。
-- 驗證紀錄: §1~§5 的所有 file:line 與事實描述沿用本 session 稍早(11:40 那筆)逐條核對原始碼的結果,未變動。§6/§7/§8 為日誌萃取,已逐條回查對應日誌條目確認出處無誤,每列均標註來源日期。本次只動 .md,未觸碰任何 .py,無須執行程式。
-- 下一個 agent 該做什麼: 僅異動 `COMPONENT_MAP.md` 與 `LLM_MEMORY.md` 兩份文件、未動程式碼,依 §2.1 不需審閱。續行原定任務: B2 跨作業系統 UI/UX 相容——`COMPONENT_MAP.md` §8 已明確標出最大缺口是「Windows/macOS 實機零驗證紀錄」,建議從那裡下手。做完任何驗證後,**記得回頭在 §8 台帳追加一列**。
-- 地雷警告: 交接日誌目前 12 筆,尚未達 `AGENTS.md` §0 的 20 筆封存門檻,故本次**未**封存任何日誌(不自行提前執行憲法規定的維護動作)。屆時執行封存的 agent 務必先做萃取再封存。另:`COMPONENT_MAP.md` 仍無 hook 強制與程式碼同步,已在該檔開頭明文「不符時以程式碼為準」作為緩解;是否在 `scripts/hooks/pre-commit` 加一條 warn(不 block),使用者尚未裁示。
-
-
-### 2026-09-03 11:40 [build] 使用工具: Claude Opus 5 (Claude Code)
-
-- 審閱結論(承上一筆 11:26 標記的「需要審閱」;本次為全新 session 且非該檔作者,符合 §2.1 禁止左手審右手): 逐項對照原始碼核對 `COMPONENT_MAP.md`,**發現 3 處與程式碼不符**:(1) 稱 worker 送出「5 種 tuple 訊息」但實際只有 4 種(`status`/`update_tol`/`error`/`success`,見 `calculation_worker.py` 全部 `msg_queue.put` 呼叫與 `main.py` check_queue 的四個分支);(2) worker 的 config 依賴清單漏列 `MAX_TOLERANCE`、`MIN_TOLERANCE`(calculation_worker.py:88,92 的自動放寬邏輯用到);(3) 稱 `export_csv`/`save_notes_as` 是「唯二有檔案系統副作用的方法」,但 `show_about`(main.py:671)會讀 `CREDITS.txt`,應限縮為「唯二有寫檔副作用」。另有一處敘述不精確:`draw_circuit` 並非只由 trace_add 觸發,main.py:253 有一次直接呼叫做初繪。其餘核對通過:14 個 params key 完全正確;所有 file:line 連結(calculation_worker.py:8、main.py:377/422/439/450/491、ui_components.py:41/123/243/370)實測皆指向正確位置;`config.py` 確為純常數(無 import、無 def);`CompactSolverFrame` 與計算引擎無資料交換屬實(main.py:390-401 為單向寫入)。依 §2.1 原本「不通過即停手待裁示」,但使用者已於本次對話明確指示「依照你建議修改」,即為裁示,故在同一次作業中一併修正,問題原貌記錄於本欄供追溯。
-- 完成了什麼: 依使用者指示執行 `COMPONENT_MAP.md` 瘦身(12.5 KB → 6.3 KB,約 -50%),並修正上述 4 處錯誤。判斷依據:全專案原始碼僅 5 檔 1417 行(約 25k token),而該檔原本被無條件要求每個 session 先讀(約 5k token);其中約半數內容(utils.py 六個純函式的輸入輸出表、main.py 次要 UI glue 方法分類清單)直接讀原始碼更快且不會過期,屬淨負價值;「驗證狀態」欄整排幾乎都是 ❌,資訊量近乎零,且是本檔 §C 交接日誌的衍生資料,雙軌維護必然漂移,故整欄移除、改為在該檔 §5 以一句話指回交接日誌。保留的是讀單一檔案還原不出來的跨檔案事實:模組關聯圖、dict-in/queue-out 契約(含 14 個 key 與 4 種訊息 tuple 的完整規格、rows dict 的 6 個 key)、config.py 影響面警語(補上 MAX/MIN_TOLERANCE 與 worker 內寫死的 50M 搜尋空間上限)、四條「否定性事實」(Quick Solver 與引擎無資料交換、draw_circuit 觸發時機、FilterWindow 用 callback 非 return、寫檔方法只有兩個)。同時把本檔開頭的指標由「先讀」(等於每 session 無條件載入)改為條件式觸發——這才是原本真正浪費上下文之處。另依 §2,接手時工作樹不乾淨(前一手刻意未 commit,把草稿留在工作樹等使用者確認),已先以 `[takeover] WIP: 接手時發現未提交變更`(44e5b7f)保存現場再開工。〈目前狀態〉的「交接基準 commit」維持 `0e0176e` 不變:我與前一手的接手點相同,且下一手需以此為起點才看得到完整異動。
-- 驗證紀錄: 以 `sed -n` / `grep -n` 實際讀取 `calculation_worker.py` 全文、`main.py:370-520`、`config.py` 常數清單與 import 狀況、`ui_components.py` 與 `utils.py` 的 class/def 行號,逐條核對新版保留的每一個 file:line 與事實描述,確認全數與現行程式碼一致。本次只動兩份 .md,未觸碰任何 .py,故無須執行程式。
-- 下一個 agent 該做什麼: 本次僅異動 `COMPONENT_MAP.md` 與 `LLM_MEMORY.md` 兩份文件、未動任何程式碼,依 §2.1 不需審閱。續行原定任務: B2 跨作業系統 UI/UX 相容——在 Windows 實機驗證 `CircuitCanvas` 排版與 `MIN_WINDOW_SIZE` 是否足夠(Linux + xvfb 已驗過)。另〈阻塞點〉那兩筆舊的待審閱仍堆疊中,未處理。
-- 地雷警告: `COMPONENT_MAP.md` 仍無 hook 強制與程式碼同步,緩解方式是已在該檔 §0 明文寫「內容與程式碼不符時一律以程式碼為準」。本 agent 曾提議在 `scripts/hooks/pre-commit` 加一條「.py 有異動但 `COMPONENT_MAP.md` 未進 staged 就 warn(不 block)」,使用者尚未明確裁示,故未實作。
-
-### 2026-09-03 11:26 [build] 使用工具: Claude Sonnet 5 (Claude Code)
-
-- 完成了什麼: 依使用者指示,建立 `COMPONENT_MAP.md` 草稿並在 `LLM_MEMORY.md` 開頭加入指向它的提示。`COMPONENT_MAP.md` 內容係實際讀取 `main.py`、`ui_components.py`、`calculation_worker.py`、`utils.py`、`config.py` 全文後整理:§0 模組關聯圖(資料流,含 main.py↔calculation_worker.py 的 dict-in/queue-out 隱性介面說明)、§1 核心資料流物件表(worker_calculation、run_calculation_trigger、check_queue、preprocess_display_data、utils.py 六個純函式,逐一列輸入/輸出/關聯/驗證狀態)、§2 UI 元件表(FilterWindow、CompactSolverFrame、CircuitCanvas、NotesFrame、configure_system_settings)、§3 main.py 次要 UI glue 方法分類清單(未逐一展開)、§4 config.py 說明、§5 已知落差與後續建議(含測試優先順序建議、與 §B3 中期目標的關聯)。驗證狀態欄位皆據實填寫:專案無 `tests/` 目錄、`requirements.txt` 未列測試框架,故多數物件標記 ❌ 未驗證;`CircuitCanvas`/`configure_system_settings` 依 2026-07-26 22:25 交接日誌的 xvfb-run 手動驗證紀錄標記為 ⚠️ 部分驗證(僅 Linux,且該筆日誌本身仍在待審閱堆疊中)。同時依 §2 規則,把〈目前狀態〉的「交接基準 commit」由舊值 `7219204` 覆蓋為當下 HEAD `0e0176e`(覆蓋前已確認上一筆 2026-08-27 18:28 日誌未標「需要審閱」,依規則順序可直接覆蓋)。未觸碰 `AGENTS.md`。尚未 commit,等待使用者確認後再進行。
-- 下一個 agent 該做什麼: 本次改動需要審閱:(1) `COMPONENT_MAP.md` 各表格列出的輸入/輸出/關聯是否與實際程式碼一致(逐列核對 file:line 連結指向的內容);(2) 驗證狀態欄位的 ✅/⚠️/❌ 判定是否有遺漏其他交接日誌中記載過的驗證紀錄;(3) `LLM_MEMORY.md` 開頭新增的指向提示是否會與 §0「先讀 LLM_MEMORY.md」的既有規則衝突或造成閱讀順序混淆。若使用者本次口頭豁免審閱,依 §2.1 在本欄位補記「使用者於<時間>明示豁免本次審閱」即可略過上述三點直接繼續。
-- 地雷警告: `COMPONENT_MAP.md` 目前沒有 git hook 強制與程式碼同步(不像 `LLM_MEMORY.md` 有 pre-commit 強制檢查),往後改 `calculation_worker.py`/`utils.py`/`ui_components.py`/`config.py` 的函式簽章或呼叫關係時,若忘記回頭同步,該檔會產生誤導後續 agent 判斷的錯誤資訊。
-
-### 2026-08-27 18:28 [build] 使用工具: GitHub Copilot
-
-- 完成了什麼: 依使用者明確指示刪除版控中的 `bin/VoltMatch.exe`，準備同步移除 GitHub 上的 24 MB 執行檔。
-- 下一個 agent 該做什麼: 無。
-- 地雷警告: 移除執行檔後，使用者需透過 GitHub Actions 或其他建置流程取得發行版本。
-
-
-### 2026-08-25 16:04 [maintain] 使用工具: Claude Code
-
-- 完成了什麼: 依使用者指示，將 `AGENTS.md` 整份覆蓋升級至 Playbook v9（原版本 v2）。改動摘要：新增「交接基準 commit」欄位與其填寫規則、覆蓋前後順序規定（§2）；新增 §2.1 Review Loop 審閱提示機制；新增 §4「作用範圍僅限本檔所在目錄」巢狀邊界規則；新增語言與編碼規範明文（UTF-8／繁體中文）；新增 `Playbook-Variant: online` 標記。舊版 AGENTS.md（v2，commit `4462419`）已存於 git 歷史，可用 `git show 4462419:AGENTS.md` 找回，不再另外存檔。同時將 `scripts/hooks/pre-commit`／`commit-msg` 整份覆蓋至 v9 版本（中文檔名相容、管轄錨點收斂避免死鎖、大量檔案效能優化、commit-msg 白名單合併/還原訊息等修正），並確認 `.gitattributes` 已含 `scripts/hooks/* text eol=lf`。同步將〈A. 目前狀態〉的「最新 commit」欄改名為「交接基準 commit」（Playbook v3 起的欄位語意變更：只在接手時填一次、工作期間不再更動，不再是「做到哪」），並填入當下 HEAD。
-- 下一個 agent 該做什麼: 本次改動需要審閱：確認 v9 新規則（尤其 §2.1 Review Loop 與 §4 巢狀邊界）是否符合本專案實際工作模式，並確認 hook 版本升級後 commit 仍正常通過。
-- 地雷警告: 無
-
-### 2026-08-24 [build] 使用工具: GitHub Copilot
-
-- 完成了什麼: 已提交並推送使用者在 `環境部屬.md` 的部署文件修改：補充 Linux 快速安裝指令、移除多餘編號與整理 Windows 區段空白。此變更未修改程式碼。
-- 驗證紀錄: `git diff --check` 通過；提交 `9cfdbcc` 已推送至 `origin/main`。
-- 下一個 agent 該做什麼: 無。
-- 地雷警告: 無。
+- 完成了什麼: (1) 依使用者授權升級 `AGENTS.md` Playbook v9→v10:新增〈三份檔案的分工〉與〈寫入時分流〉、交接日誌單筆 1200 bytes 上限、防膨脹門檻由「20 筆」改為「10 KB」、技術脈絡改掛 `COMPONENT_MAP.md`。(2) `COMPONENT_MAP.md` 重構為不衰減層知識庫(8 節,新增決策紀錄/環境知識/驗證台帳)。(3) 依新門檻封存 10 筆舊日誌至 `ARCHIVE.md`,並把本 session 自己先前兩筆逾長條目(共 8.3 KB)壓縮成本筆。設計理由與實測數據見 `COMPONENT_MAP.md` §6 決策 #8~#12。
+- 下一個 agent 該做什麼: 本次改動需要審閱(異動憲法層 `AGENTS.md`):(1) v10 新條文與既有條文是否衝突;(2) 1200 bytes 上限實務上是否可行;(3) 封存後〈阻塞點〉指向的兩筆待審閱是否完整保留。之後續行 B2: Windows 實機驗證 UI(缺口見 `COMPONENT_MAP.md` §8)。
+- 地雷警告: `AGENTS.md` 是跨專案共用 Playbook 副本,本次使此副本領先母本至 v10;新條文已刻意寫成專案無關以便回移植。
 
 ### 2026-07-29 17:33 [build] 使用工具: Claude Opus 5 (Claude Code)
 
@@ -94,51 +60,21 @@
 - 追加(22:35): 使用者手動把 README 的〈⬇️ Download〉整段從〈Packaging Notes〉之後上移到〈About VoltMatch〉之後,內容未變(純段落順序調整),依現況提交並推送 main。
 - 地雷警告: 遠端 `bin/VoltMatch.exe`(24MB 二進位)仍在版控中,會持續膨脹 repo;若要清掉需使用者裁示(屬架構級決定)。
 
-### 2026-07-26 21:55 [build] 使用工具: Claude Opus 5 (Claude Code)
-
-- 完成了什麼: 修正 Circuit 電路圖在 Linux 下標籤被裁切的排版問題(B2 跨 OS UI 相容)。`ui_components.CircuitCanvas` 原本用寫死像素(畫布 80x210、主幹 cx=30、字級 9/10)排版,Windows 以外的系統字型較寬,V_Target / R_Hi1 / V_Ref / R_Low 標籤超出畫布被切掉。改為:(1) 以 `tkfont.Font` 實際度量(measure / linespace)推算主幹 x 座標、電阻高度與節點間距,字級改為隨 `config.FONTSIZE` 連動(-2 / -3,預設 12 時等同原本的 10 / 9);(2) 電阻標籤由「偏下 +10px」改為垂直置中,V_Ref 文字下移避免壓到分接導線;(3) 新增 `_fit_to_content()`,繪製後依 `bbox("all")` 自動調整畫布尺寸,並以雙電阻模式高度為下限保留,單/雙電阻切換時尺寸固定不跳動;(4) `main.py:250` 移除寫死的 `width=80, height=210`,尺寸交給 draw_circuit 決定。
-- 追加(21:58): 補上主視窗最小尺寸限制。`config.py` 新增 `MIN_WINDOW_SIZE = (900, 680)`(緊鄰 `WINDOWS_SIZE`),`main.py:42` 在 `geometry()` 後呼叫 `self.root.minsize(*config.MIN_WINDOW_SIZE)`。下限值來源:實測左欄控制項自然高度 648px,低於此值 About 按鈕會被裁掉;寬度 900 時 Notes 區仍有約 304px 可用。此數值由使用者後續自行微調(使用者已改為 1800x1000,因其環境 tk scaling≈2.0,左欄自然高度實際約 792px)。
-- 追加(22:10): 底部 Circuit 區塊改為向上對齊。`main.py:250` 的 `circuit_frame.pack()` 補上 `anchor="n"`;原本 pack(side=LEFT) 未指定 anchor 會在該列垂直置中,Circuit 框比 Notes 矮,標題就比 Quick Solver / Notes 低一截(96dpi 下偏移 6px,144dpi/scaling 2.0 下偏移 21px,DPI 越高越明顯)。實測 anchor="n" 後三個區塊上緣 offset 皆為 0。
-- 追加(22:15): Circuit 繪圖區改為填滿該列高度。`main.py:249-251` 的框架加 `fill="y"`、畫布改 `pack(fill=BOTH, expand=True)`;`CircuitCanvas` 拆出 `_render()` 並綁定 `<Configure>`,當實際高度大於自然高度時,把多出來的空間依比例分配給電阻高度與 V_Ref 節點間距(文字與接地符號不縮放),單/雙電阻模式都會填滿。防迴圈設計:`_fit_to_content()` 回報的請求高度一律用「雙電阻模式的自然高度」(`request_h`),不回報拉伸後高度,否則外層會被越撐越大;`_on_resize` 另以 `_last_size` 比對過濾重複事件。實測啟動後只重繪 2 次、閒置與視窗縮放皆 0 次(無無限迴圈),兩種模式底部剩餘 7~9px(即預留的接地留白),無溢出。
-- 追加(22:20): 使用者手動微調 `config.py`:`FONTSIZE` 12→10、`WINDOWS_SIZE`/`MIN_WINDOW_SIZE` 1800x1000→1680x1000,一併提交。
-- 驗證紀錄: 以 xvfb-run 實際啟動 `main.py`(RVDSApp)確認可正常開啟並重繪;單/雙電阻模式互切後畫布皆為 88x200 且 bbox 完全落在畫布內;另以 WenQuanYi 12 / Noto Sans CJK TC 16 / Helvetica 9 / DejaVu Sans 20 四組字型字級驗證 fits=True 全數通過;並將 canvas 輸出 PostScript 轉圖目視確認無裁切、無重疊。
-- 下一個 agent 該做什麼: 本次改動需要審閱:(1) `ui_components.py` CircuitCanvas 幾何計算是否正確(cx 左側預留是否涵蓋 V_Target 半寬、TERM_HALF/GND_HALF/ZIGZAG);(2) `_fit_to_content` 的 min_height 保留值(+18+line_width*2+PAD)是否會在其他字型下造成畫布過高或不足;(3) `main.py:250` 移除固定寬高後,底部 Circuit/Solver/Notes 三欄版面在 Windows 實機上是否仍正常(本次僅在 Linux + Xvfb 驗證,未在 Windows/macOS 實機驗證);(4) `MIN_WINDOW_SIZE` 是依實測得出的寫死值(使用者已調為 1800x1000),在 Windows/macOS 字型較寬時是否仍足夠;(5) `CircuitCanvas._on_resize` / `_fit_to_content` 的防迴圈邏輯是否在其他視窗管理員或 DPI 下仍收斂(請確認請求高度沒有回報拉伸後的值)。
-- 地雷警告: 無
-
-### 2026-07-06 18:10 [maintain] 使用工具: Claude Haiku 4.5
-
-- 完成了什麼: 提交 Git Hook 腳本權限修復（chmod +x），確保 pre-commit 與 commit-msg 脚本在 push 時可正確执行。
-- 下一個 agent 該做什麼: 無（權限修復完成，可進行 push）。
-- 地雷警告: 無
-
-### 2026-07-06 18:05 [maintain] 使用工具: Claude Haiku 4.5
-
-- 完成了什麼: Playbook v1→v2 升級完成。AGENTS.md 整份覆蓋至新版模板（Playbook-Version: 2），§5 改為純文字指向 LLM_MEMORY.md〈E. 專案技術脈絡〉；新增 LLM_MEMORY.md〈E. 專案技術脈絡〉區塊，搬入 v1 §5 既填值（建置指令、測試指令、程式碼慣例）。
-- 下一個 agent 該做什麼: 無（升級完成，可恢復原定 build 階段任務）。
-- 地雷警告: 無
-
-### 2026-07-06 18:00 [maintain] 使用工具: Claude Haiku 4.5
-
-- 完成了什麼: Git Hook 驗證完成。發現 pre-commit 與 commit-msg 腳本權限未設置為可執行，執行 `chmod +x` 修復；測試結果：pre-commit 成功攔截缺少 LLM_MEMORY.md 變更的 commit、commit-msg 成功攔截不符合 [plan]/[build]/[maintain]/[takeover] 格式的 commit 訊息。
-- 下一個 agent 該做什麼: 無（Hook 驗證完成，可恢復 build 階段任務；稍後執行 Playbook v1→v2 升級）。
-- 地雷警告: 無
-
-### 2026-07-06 16:50 [plan] 使用工具: Claude Haiku 4.5
-
-- 完成了什麼: 完成 Playbook v1 防禦導入：AGENTS.md 整份覆蓋至新版模板（保留 Playbook-Version: 1 標記與 §5 技術脈絡值），CLAUDE.md/GEMINI.md 格式確認無誤，README.md 已有頂端註解；建立 `scripts/hooks/pre-commit` 與 `scripts/hooks/commit-msg`，並執行 `git config core.hooksPath scripts/hooks` 啟用。
-- 下一個 agent 該做什麼: 本次改動需要審閱：驗證 Git Hook 在下次 commit 時能正常攔截非標格訊息與未更新 LLM_MEMORY.md 的情況。驗證後可繼續推進原定 build 階段任務。
-- 地雷警告: 無
-
-### 2026-07-05 21:24 [build] 使用工具: Antigravity
-
-- 完成了什麼: 導入 AI agent 工作流，建立 AGENTS.md, LLM_MEMORY.md, CLAUDE.md, GEMINI.md，並修改 README.md 頂部。
-- 下一個 agent 該做什麼: 繼續處理不同作業系統的 uiux 相容性、畫面顯示、字形排版調整任務。
-- 地雷警告: 無
-
 ## D. 已封存結論(自〈總結封存〉搬入,唯讀)
+
+原文保留於 [`ARCHIVE.md`](./ARCHIVE.md)；不衰減知識已萃取至 [`COMPONENT_MAP.md`](./COMPONENT_MAP.md)。
+
+- **2026-09-03 11:26 [build]** 建立 `COMPONENT_MAP.md` 初版（介面對照表形式）。同日即被重構為不衰減層知識庫，內容全數取代。
+- **2026-08-27 18:28 [build]** 依使用者指示刪除版控中的 `bin/VoltMatch.exe`（24 MB）。
+- **2026-08-25 16:04 [maintain]** `AGENTS.md` 由 Playbook v2 升級至 v9，同步升級 `scripts/hooks/` 兩支腳本，〈最新 commit〉欄改名〈交接基準 commit〉。舊版 v2 存於 commit `4462419`。
+- **2026-08-24 [build]** 提交並推送 `環境部屬.md` 部署文件修改（補 Linux 安裝指令）。
+- **2026-07-26 21:55 [build]** 修正 `CircuitCanvas` 在 Linux 下標籤被裁切：改為字型度量動態排版、新增 `_fit_to_content()`、加 `MIN_WINDOW_SIZE`、Circuit 區塊改 `anchor="n"` 並填滿列高。設計理由與驗證結果已萃取至 `COMPONENT_MAP.md` §6／§7／§8。
+- **2026-07-06 18:10 [maintain]** 提交 Git Hook 腳本權限修復（chmod +x）。
+- **2026-07-06 18:05 [maintain]** Playbook v1→v2 升級；新增 `LLM_MEMORY.md`〈E. 專案技術脈絡〉（該節已於 v10 移至 `COMPONENT_MAP.md`）。
+- **2026-07-06 18:00 [maintain]** Git Hook 驗證：`pre-commit` / `commit-msg` 攔截功能實測通過（已入 `COMPONENT_MAP.md` §8 台帳）。
+- **2026-07-06 16:50 [plan]** Playbook v1 導入：建立 `AGENTS.md` 與 `scripts/hooks/`，啟用 `core.hooksPath`。
+- **2026-07-05 21:24 [build]** 導入 AI agent 工作流，建立 `AGENTS.md`／`LLM_MEMORY.md`／`CLAUDE.md`／`GEMINI.md`。
 
 ## E. 專案技術脈絡(依專案填寫,agent 得隨專案實況更新,保持精簡)
 
-- 建置指令: `pyinstaller VoltMatch.spec` (若需編譯執行檔)
-- 測試指令: `python main.py`
-- 程式碼慣例: Python 3.x, 使用 Tkinter (UI), NumPy 等
+自 Playbook v10 起，建置／測試指令與程式碼慣例改記於 [`COMPONENT_MAP.md`](./COMPONENT_MAP.md) §1（不衰減層）——這類資訊不會過期作廢，不該放在會被封存的本檔。
