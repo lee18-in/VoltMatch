@@ -1,10 +1,12 @@
 # LLM_MEMORY.md — 工作記憶(agent 讀寫;規則見 AGENTS.md,勿在此重複)
 
+> 📌 **先讀 [`COMPONENT_MAP.md`](./COMPONENT_MAP.md)**：記錄專案內各物件的輸入/輸出/上下游關聯與驗證狀態(本檔記「現在做到哪」,COMPONENT_MAP.md 記「程式碼介面長怎樣」)。異動到 `calculation_worker.py`/`utils.py`/`ui_components.py`/`config.py` 的函式簽章或呼叫關係時,務必回頭同步更新該檔對應區塊,否則該檔會產生誤導(該檔尚無 hook 強制連動,全靠自律)。
+
 ## A. 目前狀態(每次交接必更新)
 
 - 目前階段: build
-- 最後更新: 2026-08-27 18:28 / 當時階段: build
-- 交接基準 commit: 7219204 [build] 更新部署文件推送紀錄
+- 最後更新: 2026-09-03 11:26 / 當時階段: build
+- 交接基準 commit: 0e0176e [maintain] 移除版控執行檔
 - 進行中任務: 不同作業系統的uiux相容 畫面顯示 字形排版調整 for 不同作業系統(已完成 Circuit 電路圖區塊)
 - 阻塞點: 兩筆待審閱堆疊中,皆需新 session/新工具承接(§2.1 禁止左手審右手):(1) 2026-07-26 22:25 tag 發版 workflow;(2) 2026-07-29 17:33 .venv2 取消版控
 
@@ -28,6 +30,12 @@
 - [ ]
 
 ## C. 交接日誌(只追加,不刪改;最新在最上,每筆一個小節)
+
+### 2026-09-03 11:26 [build] 使用工具: Claude Sonnet 5 (Claude Code)
+
+- 完成了什麼: 依使用者指示,建立 `COMPONENT_MAP.md` 草稿並在 `LLM_MEMORY.md` 開頭加入指向它的提示。`COMPONENT_MAP.md` 內容係實際讀取 `main.py`、`ui_components.py`、`calculation_worker.py`、`utils.py`、`config.py` 全文後整理:§0 模組關聯圖(資料流,含 main.py↔calculation_worker.py 的 dict-in/queue-out 隱性介面說明)、§1 核心資料流物件表(worker_calculation、run_calculation_trigger、check_queue、preprocess_display_data、utils.py 六個純函式,逐一列輸入/輸出/關聯/驗證狀態)、§2 UI 元件表(FilterWindow、CompactSolverFrame、CircuitCanvas、NotesFrame、configure_system_settings)、§3 main.py 次要 UI glue 方法分類清單(未逐一展開)、§4 config.py 說明、§5 已知落差與後續建議(含測試優先順序建議、與 §B3 中期目標的關聯)。驗證狀態欄位皆據實填寫:專案無 `tests/` 目錄、`requirements.txt` 未列測試框架,故多數物件標記 ❌ 未驗證;`CircuitCanvas`/`configure_system_settings` 依 2026-07-26 22:25 交接日誌的 xvfb-run 手動驗證紀錄標記為 ⚠️ 部分驗證(僅 Linux,且該筆日誌本身仍在待審閱堆疊中)。同時依 §2 規則,把〈目前狀態〉的「交接基準 commit」由舊值 `7219204` 覆蓋為當下 HEAD `0e0176e`(覆蓋前已確認上一筆 2026-08-27 18:28 日誌未標「需要審閱」,依規則順序可直接覆蓋)。未觸碰 `AGENTS.md`。尚未 commit,等待使用者確認後再進行。
+- 下一個 agent 該做什麼: 本次改動需要審閱:(1) `COMPONENT_MAP.md` 各表格列出的輸入/輸出/關聯是否與實際程式碼一致(逐列核對 file:line 連結指向的內容);(2) 驗證狀態欄位的 ✅/⚠️/❌ 判定是否有遺漏其他交接日誌中記載過的驗證紀錄;(3) `LLM_MEMORY.md` 開頭新增的指向提示是否會與 §0「先讀 LLM_MEMORY.md」的既有規則衝突或造成閱讀順序混淆。若使用者本次口頭豁免審閱,依 §2.1 在本欄位補記「使用者於<時間>明示豁免本次審閱」即可略過上述三點直接繼續。
+- 地雷警告: `COMPONENT_MAP.md` 目前沒有 git hook 強制與程式碼同步(不像 `LLM_MEMORY.md` 有 pre-commit 強制檢查),往後改 `calculation_worker.py`/`utils.py`/`ui_components.py`/`config.py` 的函式簽章或呼叫關係時,若忘記回頭同步,該檔會產生誤導後續 agent 判斷的錯誤資訊。
 
 ### 2026-08-27 18:28 [build] 使用工具: GitHub Copilot
 
