@@ -13,9 +13,9 @@
 ## A. 目前狀態(每次交接必更新)
 
 - 目前階段: build
-- 最後更新: 2026-09-03 18:13 / 當時階段: build
+- 最後更新: 2026-09-03 20:53 / 當時階段: build
 - 交接基準 commit: 317c997 [build] 記錄遠端同步狀態
-- 遠端狀態: 本地 main 領先 origin/main 1 筆(本次審閱 commit),尚未 push,等待使用者指示
+- 遠端狀態: 已依使用者指示 push 至 origin/main,工作樹乾淨、無未推送 commit(不記雜湊:記憶檔一寫進去雜湊就變,見 AGENTS.md §2 的自我指涉條款)
 - 進行中任務: 不同作業系統的uiux相容 畫面顯示 字形排版調整 for 不同作業系統(已完成 Circuit 電路圖區塊)
 - 阻塞點: 兩筆待審閱堆疊中,皆需新 session/新工具承接(§2.1 禁止左手審右手):(1) 2026-07-26 22:25 tag 發版 workflow;(2) 2026-07-29 17:33 .venv2 取消版控
 
@@ -43,7 +43,7 @@
 
 - 完成了什麼: 依使用者指示,以 `git diff 0e0176e..HEAD` 審閱 2026-09-03 18:04 那筆(Playbook v10 升級)。結論:**通過**。(1) v10 新條文與既有條文無衝突,§2.1 白名單/§4/§5 皆已同步納入 `COMPONENT_MAP.md`,hooks 不涉及筆數/KB 門檻;(2) 1200 bytes 上限可行,該筆實測 1132 bytes,本筆亦在限內;(3) 07-26 22:25 與 07-29 17:33 兩筆待審完整保留(位元組數不變),`ARCHIVE.md` 10 筆與 §D 摘要一一對應,不衰減知識已在 `COMPONENT_MAP.md` §6~§8。同時修正 `COMPONENT_MAP.md` 開頭「日誌滿 20 筆」為「超過 10 KB」。審閱細節與附帶發現見 `COMPONENT_MAP.md` §8 台帳。
 - 下一個 agent 該做什麼: 續審剩餘兩筆(07-26 22:25 workflow、07-29 17:33 .venv2),再續行 B2 Windows 實機驗證 UI。
-- 地雷警告: 本 cloud 環境 `core.hooksPath` 被工具覆寫,專案 hooks 未自動執行,本次以手動執行兩支 hook 腳本代替。
+- 地雷警告: 本 cloud 環境 `core.hooksPath` 被工具覆寫,專案 hooks 未自動執行,本次以手動執行兩支 hook 腳本代替。使用者於 2026-09-03 20:53 明示 push,審閱 commit 已上 origin/main。
 
 ### 2026-09-03 18:04 [build] 使用工具: Claude Opus 5 (Claude Code)
 
