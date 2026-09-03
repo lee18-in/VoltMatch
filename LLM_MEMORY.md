@@ -1,11 +1,11 @@
 # LLM_MEMORY.md — 工作記憶(agent 讀寫;規則見 AGENTS.md,勿在此重複)
 
-> 📌 **先讀 [`COMPONENT_MAP.md`](./COMPONENT_MAP.md)**：記錄專案內各物件的輸入/輸出/上下游關聯與驗證狀態(本檔記「現在做到哪」,COMPONENT_MAP.md 記「程式碼介面長怎樣」)。異動到 `calculation_worker.py`/`utils.py`/`ui_components.py`/`config.py` 的函式簽章或呼叫關係時,務必回頭同步更新該檔對應區塊,否則該檔會產生誤導(該檔尚無 hook 強制連動,全靠自律)。
+> 📌 **[`COMPONENT_MAP.md`](./COMPONENT_MAP.md)**:跨模組介面地圖(記模組之間怎麼接),本檔則記「現在做到哪」。**只有動到 `main.py`↔`calculation_worker.py` 的 params/queue 契約、`config.py` 常數、或 UI 元件 callback 簽章時才需查閱並回頭同步**;純 UI 排版調整、文件修改不必讀,避免無謂佔用上下文。該檔無 hook 強制連動,內容與程式碼不符時一律以程式碼為準。
 
 ## A. 目前狀態(每次交接必更新)
 
 - 目前階段: build
-- 最後更新: 2026-09-03 11:26 / 當時階段: build
+- 最後更新: 2026-09-03 11:40 / 當時階段: build
 - 交接基準 commit: 0e0176e [maintain] 移除版控執行檔
 - 進行中任務: 不同作業系統的uiux相容 畫面顯示 字形排版調整 for 不同作業系統(已完成 Circuit 電路圖區塊)
 - 阻塞點: 兩筆待審閱堆疊中,皆需新 session/新工具承接(§2.1 禁止左手審右手):(1) 2026-07-26 22:25 tag 發版 workflow;(2) 2026-07-29 17:33 .venv2 取消版控
@@ -30,6 +30,14 @@
 - [ ]
 
 ## C. 交接日誌(只追加,不刪改;最新在最上,每筆一個小節)
+
+### 2026-09-03 11:40 [build] 使用工具: Claude Opus 5 (Claude Code)
+
+- 審閱結論(承上一筆 11:26 標記的「需要審閱」;本次為全新 session 且非該檔作者,符合 §2.1 禁止左手審右手): 逐項對照原始碼核對 `COMPONENT_MAP.md`,**發現 3 處與程式碼不符**:(1) 稱 worker 送出「5 種 tuple 訊息」但實際只有 4 種(`status`/`update_tol`/`error`/`success`,見 `calculation_worker.py` 全部 `msg_queue.put` 呼叫與 `main.py` check_queue 的四個分支);(2) worker 的 config 依賴清單漏列 `MAX_TOLERANCE`、`MIN_TOLERANCE`(calculation_worker.py:88,92 的自動放寬邏輯用到);(3) 稱 `export_csv`/`save_notes_as` 是「唯二有檔案系統副作用的方法」,但 `show_about`(main.py:671)會讀 `CREDITS.txt`,應限縮為「唯二有寫檔副作用」。另有一處敘述不精確:`draw_circuit` 並非只由 trace_add 觸發,main.py:253 有一次直接呼叫做初繪。其餘核對通過:14 個 params key 完全正確;所有 file:line 連結(calculation_worker.py:8、main.py:377/422/439/450/491、ui_components.py:41/123/243/370)實測皆指向正確位置;`config.py` 確為純常數(無 import、無 def);`CompactSolverFrame` 與計算引擎無資料交換屬實(main.py:390-401 為單向寫入)。依 §2.1 原本「不通過即停手待裁示」,但使用者已於本次對話明確指示「依照你建議修改」,即為裁示,故在同一次作業中一併修正,問題原貌記錄於本欄供追溯。
+- 完成了什麼: 依使用者指示執行 `COMPONENT_MAP.md` 瘦身(12.5 KB → 6.3 KB,約 -50%),並修正上述 4 處錯誤。判斷依據:全專案原始碼僅 5 檔 1417 行(約 25k token),而該檔原本被無條件要求每個 session 先讀(約 5k token);其中約半數內容(utils.py 六個純函式的輸入輸出表、main.py 次要 UI glue 方法分類清單)直接讀原始碼更快且不會過期,屬淨負價值;「驗證狀態」欄整排幾乎都是 ❌,資訊量近乎零,且是本檔 §C 交接日誌的衍生資料,雙軌維護必然漂移,故整欄移除、改為在該檔 §5 以一句話指回交接日誌。保留的是讀單一檔案還原不出來的跨檔案事實:模組關聯圖、dict-in/queue-out 契約(含 14 個 key 與 4 種訊息 tuple 的完整規格、rows dict 的 6 個 key)、config.py 影響面警語(補上 MAX/MIN_TOLERANCE 與 worker 內寫死的 50M 搜尋空間上限)、四條「否定性事實」(Quick Solver 與引擎無資料交換、draw_circuit 觸發時機、FilterWindow 用 callback 非 return、寫檔方法只有兩個)。同時把本檔開頭的指標由「先讀」(等於每 session 無條件載入)改為條件式觸發——這才是原本真正浪費上下文之處。另依 §2,接手時工作樹不乾淨(前一手刻意未 commit,把草稿留在工作樹等使用者確認),已先以 `[takeover] WIP: 接手時發現未提交變更`(44e5b7f)保存現場再開工。〈目前狀態〉的「交接基準 commit」維持 `0e0176e` 不變:我與前一手的接手點相同,且下一手需以此為起點才看得到完整異動。
+- 驗證紀錄: 以 `sed -n` / `grep -n` 實際讀取 `calculation_worker.py` 全文、`main.py:370-520`、`config.py` 常數清單與 import 狀況、`ui_components.py` 與 `utils.py` 的 class/def 行號,逐條核對新版保留的每一個 file:line 與事實描述,確認全數與現行程式碼一致。本次只動兩份 .md,未觸碰任何 .py,故無須執行程式。
+- 下一個 agent 該做什麼: 本次僅異動 `COMPONENT_MAP.md` 與 `LLM_MEMORY.md` 兩份文件、未動任何程式碼,依 §2.1 不需審閱。續行原定任務: B2 跨作業系統 UI/UX 相容——在 Windows 實機驗證 `CircuitCanvas` 排版與 `MIN_WINDOW_SIZE` 是否足夠(Linux + xvfb 已驗過)。另〈阻塞點〉那兩筆舊的待審閱仍堆疊中,未處理。
+- 地雷警告: `COMPONENT_MAP.md` 仍無 hook 強制與程式碼同步,緩解方式是已在該檔 §0 明文寫「內容與程式碼不符時一律以程式碼為準」。本 agent 曾提議在 `scripts/hooks/pre-commit` 加一條「.py 有異動但 `COMPONENT_MAP.md` 未進 staged 就 warn(不 block)」,使用者尚未明確裁示,故未實作。
 
 ### 2026-09-03 11:26 [build] 使用工具: Claude Sonnet 5 (Claude Code)
 
