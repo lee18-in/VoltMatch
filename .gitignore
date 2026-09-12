@@ -64,6 +64,7 @@ Desktop.ini
 
 # Binary files
 *.exe
+*.AppImage
 *.dll
 *.so
 *.dylib

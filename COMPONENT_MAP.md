@@ -137,6 +137,7 @@ worker 內一律 `p['key']` 直接取值、**無預設值保護，少一個 key 
 | 10 | 防膨脹門檻由「日誌超過 20 筆」改為「日誌區超過 10 KB」，並加單筆 1200 bytes 上限 | 實測本專案 14 筆日誌共 24.6 KB，**其中 2 筆長條目就佔 8.3 KB，最舊 10 筆加起來才 9.8 KB**——膨脹來自單筆字數，筆數門檻完全抓不到。上限取 1200 bytes 是因 800 bytes 對繁中僅約 266 字過嚴，而實測一筆合理的重大變更日誌約 1400 bytes | 2026-09-03，Playbook v10 |
 | 11 | 建置／測試指令與程式碼慣例從 `LLM_MEMORY.md`〈E〉搬到本檔 §1 | 這類資訊不會過期作廢，放在會被封存的檔案裡遲早消失 | 2026-09-03，Playbook v10 |
 | 12 | `AGENTS.md` 的 v10 新條文刻意寫成**專案無關** | `AGENTS.md` 是跨專案共用 Playbook 的副本（§5：每個專案條文一模一樣）。本次修改使此專案副本領先母本，寫成專案無關才能回移植，避免長期分岔 | 2026-09-03，Playbook v10 |
+| 13 | `bin/VoltMatch-x86_64.AppImage`(42.1MB) 移出版控，`.gitignore` 的〈Binary files〉區補 `*.AppImage` | 補完 #5 只處理了 `.exe` 的缺口——`*.exe` 規則早在 2026-08-27 就加了，AppImage 卻沒有對應規則，等於同一類建置產物只擋了一半。**與 #5 同樣沒有 rewrite history**，42.1MB 仍留在 git 歷史中。真正瘦身屬架構級決定，須使用者裁示，目前未執行 | 2026-09-12 §C |
 
 ---
 
@@ -165,6 +166,8 @@ worker 內一律 `p['key']` 直接取值、**無預設值保護，少一個 key 
 | `pre-commit` 能擋下未含 `LLM_MEMORY.md` 的 commit；`commit-msg` 能擋下不符格式的訊息 | Windows／Git Bash | 實際觸發被擋 | 2026-07-06 §C |
 | `.github/workflows/package.yml` 語法有效、job 與 artifact 路徑對應正確 | — | PyYAML 解析 + 路徑核對（**非實際執行 Actions**） | 2026-07-26 §C |
 | Playbook v10 升級（`0e0176e..317c997`）§2.1 審閱通過：新條文與 §2.1／§4／§5 一致、hooks 不涉門檻邏輯；1200 bytes 上限可行（v10 首筆 1132 bytes）；封存 10 筆與 §D 摘要一一對應、兩筆待審位元組數不變 | Linux（新 session） | `git diff` 逐項核對 + Python 量測各筆位元組 | 2026-09-03 §C |
+| `*.AppImage` 新規則未誤擋其他已版控檔案（`git ls-files` 命中數為 1，即待移除的該檔）；暫存區僅 1 M（`.gitignore`）+ 1 D（`bin/`），無誤納 | macOS arm64 | `git ls-files` + `git diff --cached --name-status` 核對 | 2026-09-12 §C |
+| `core.hooksPath` 未隨 clone 帶過來——本機 12 個 repo 全數為空值，`scripts/hooks/` 腳本存在但未啟用 | macOS arm64（新 clone 與既有 clone 皆然） | 逐 repo `git config --get core.hooksPath` 普查 | 2026-09-12 §C |
 
 > 附帶發現（審閱 v10 時，均非阻塞）：(a) 2026-08-25 的 v9 升級曾標「需要審閱」，但被 08-27 那筆蓋到頂後從未有審閱紀錄即遭封存——v9 條文等於只在本次 v10 審閱中順帶讀過 diff 周邊，未逐條審過；(b) §6 #10 的「最舊 10 筆 9.8 KB」實測為 10.9 KB、「14 筆 24.6 KB」實測 24.3 KB，結論不變；(c) §7 所稱「`LLM_MEMORY.md` 是 CRLF」與 `git ls-files --eol` 實測（`i/lf w/lf`，`0e0176e` 亦為 LF）不符，待使用者裁示是否修正該句。
 

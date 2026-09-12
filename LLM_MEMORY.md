@@ -13,11 +13,11 @@
 ## A. 目前狀態(每次交接必更新)
 
 - 目前階段: build
-- 最後更新: 2026-09-03 20:53 / 當時階段: build
-- 交接基準 commit: 317c997 [build] 記錄遠端同步狀態
+- 最後更新: 2026-09-12 10:47 / 當時階段: build
+- 交接基準 commit: 97dc879 [build] 記錄審閱結果已 push 至 origin/main
 - 遠端狀態: 已依使用者指示 push 至 origin/main,工作樹乾淨、無未推送 commit(不記雜湊:記憶檔一寫進去雜湊就變,見 AGENTS.md §2 的自我指涉條款)
 - 進行中任務: 不同作業系統的uiux相容 畫面顯示 字形排版調整 for 不同作業系統(已完成 Circuit 電路圖區塊)
-- 阻塞點: 兩筆待審閱堆疊中,皆需新 session/新工具承接(§2.1 禁止左手審右手):(1) 2026-07-26 22:25 tag 發版 workflow;(2) 2026-07-29 17:33 .venv2 取消版控
+- 阻塞點: 三筆待審閱堆疊中,皆需新 session/新工具承接(§2.1 禁止左手審右手):(1) 2026-07-26 22:25 tag 發版 workflow;(2) 2026-07-29 17:33 .venv2 取消版控;(3) 2026-09-12 10:47 AppImage 移出版控
 
 ## B. 規劃(規劃階段 [plan] 專屬區;狀態: 草稿 | 已定案)
 
@@ -39,6 +39,12 @@
 - [ ]
 
 ## C. 交接日誌(只追加,不刪改;最新在最上,每筆一個小節)
+### 2026-09-12 10:47 [build] 使用工具: Claude Opus 5 (Cursor)
+
+- 完成了什麼: 全機 repo 同步比對時,發現本 repo 工作樹有未提交的 `bin/VoltMatch-x86_64.AppImage` 刪除。依使用者 10:45 裁示提交(42.1MB 移出索引),並在 `.gitignore`〈Binary files〉區 `*.exe` 後補 `*.AppImage`。理由與「未 rewrite history」後果見 `COMPONENT_MAP.md` §6 #13;驗證見同檔 §8 新增兩列。使用者明示 push。
+- 下一個 agent 該做什麼: 本次改動需要審閱: ①`*.AppImage` 置於全域〈Binary files〉區(非 `bin/` 限定)是否過寬——若未來要版控範例 AppImage 會被擋;②`bin/` 現已無任何版控檔案,確認 README〈⬇️ Download〉段與 `package.yml` 是否有指向 `bin/` 的路徑失效(本次未檢查);③42.1MB 仍在 git 歷史,是否要裁示 rewrite history。續行 B2 Windows 實機驗證 UI。等待新 session/新工具審閱。
+- 地雷警告: 接手時 `core.hooksPath` 為空,hook 未生效(已於 10:39 對本機 12 個 repo 重設,並經反向測試確認兩支 hook 均能攔截);此設定不隨 clone 帶過來,換機器必須重設,已記入 `COMPONENT_MAP.md` §8。
+
 ### 2026-09-03 18:13 [build] 使用工具: Claude Fable 5.1 (Cursor Cloud Agent)
 
 - 完成了什麼: 依使用者指示,以 `git diff 0e0176e..HEAD` 審閱 2026-09-03 18:04 那筆(Playbook v10 升級)。結論:**通過**。(1) v10 新條文與既有條文無衝突,§2.1 白名單/§4/§5 皆已同步納入 `COMPONENT_MAP.md`,hooks 不涉及筆數/KB 門檻;(2) 1200 bytes 上限可行,該筆實測 1132 bytes,本筆亦在限內;(3) 07-26 22:25 與 07-29 17:33 兩筆待審完整保留(位元組數不變),`ARCHIVE.md` 10 筆與 §D 摘要一一對應,不衰減知識已在 `COMPONENT_MAP.md` §6~§8。同時修正 `COMPONENT_MAP.md` 開頭「日誌滿 20 筆」為「超過 10 KB」。審閱細節與附帶發現見 `COMPONENT_MAP.md` §8 台帳。
