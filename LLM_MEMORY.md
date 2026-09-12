@@ -13,8 +13,8 @@
 ## A. 目前狀態(每次交接必更新)
 
 - 目前階段: build
-- 最後更新: 2026-09-12 10:47 / 當時階段: build
-- 交接基準 commit: 97dc879 [build] 記錄審閱結果已 push 至 origin/main
+- 最後更新: 2026-09-12 11:17 / 當時階段: build
+- 交接基準 commit: b2cc74d [build] AppImage 建置產物移出版控,.gitignore 補 *.AppImage 規則
 - 遠端狀態: 已依使用者指示 push 至 origin/main,工作樹乾淨、無未推送 commit(不記雜湊:記憶檔一寫進去雜湊就變,見 AGENTS.md §2 的自我指涉條款)
 - 進行中任務: 不同作業系統的uiux相容 畫面顯示 字形排版調整 for 不同作業系統(已完成 Circuit 電路圖區塊)
 - 阻塞點: 三筆待審閱堆疊中,皆需新 session/新工具承接(§2.1 禁止左手審右手):(1) 2026-07-26 22:25 tag 發版 workflow;(2) 2026-07-29 17:33 .venv2 取消版控;(3) 2026-09-12 10:47 AppImage 移出版控
@@ -39,6 +39,12 @@
 - [ ]
 
 ## C. 交接日誌(只追加,不刪改;最新在最上,每筆一個小節)
+### 2026-09-12 11:17 [build] 使用工具: Claude Opus 5 (Cursor)
+
+- 完成了什麼: 使用者裁示 A2（**明確保留 B2 AppDir/**）：`git filter-repo` 僅移除 `bin/VoltMatch*.AppImage`／`bin/*.exe`；AppDir/ 342 檔仍在版控。`.git` 95M→13M。
+- 下一個 agent 該做什麼: 本次改動需要審閱: AppDir 保留是否仍符合預期；bin 安裝檔改走 Releases。等待新 session 審閱。
+- 地雷警告: 未 push；待使用者確認後 force-push（覆寫遠端歷史）。filter-repo 後舊 SHA 全部失效。
+
 ### 2026-09-12 10:47 [build] 使用工具: Claude Opus 5 (Cursor)
 
 - 完成了什麼: 全機 repo 同步比對時,發現本 repo 工作樹有未提交的 `bin/VoltMatch-x86_64.AppImage` 刪除。依使用者 10:45 裁示提交(42.1MB 移出索引),並在 `.gitignore`〈Binary files〉區 `*.exe` 後補 `*.AppImage`。理由與「未 rewrite history」後果見 `COMPONENT_MAP.md` §6 #13;驗證見同檔 §8 新增兩列。使用者明示 push。
