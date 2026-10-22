@@ -13,7 +13,7 @@
 ## A. 目前狀態(每次交接必更新)
 
 - 目前階段: build
-- 最後更新: 2026-09-12 11:17 / 當時階段: build
+$12026-10-22 11:15 / 當時階段: maintain
 - 交接基準 commit: b2cc74d [build] AppImage 建置產物移出版控,.gitignore 補 *.AppImage 規則
 - 遠端狀態: 已依使用者指示 push 至 origin/main,工作樹乾淨、無未推送 commit(不記雜湊:記憶檔一寫進去雜湊就變,見 AGENTS.md §2 的自我指涉條款)
 - 進行中任務: 不同作業系統的uiux相容 畫面顯示 字形排版調整 for 不同作業系統(已完成 Circuit 電路圖區塊)
@@ -39,6 +39,13 @@
 - [ ]
 
 ## C. 交接日誌(只追加,不刪改;最新在最上,每筆一個小節)
+
+### 2026-10-22 11:15 [maintain] 使用工具: Cursor Auto
+
+- 完成了什麼: 依 AI_AGENT_Playbook_Online.md 將本目錄 AGENTS.md 自 v10 整份覆蓋升級至 v11（online）。覆蓋前 AGENTS.md hash: 2c02728（可用 `git show .md` 找回）。v11 重點：§0 接手環境自檢／驗證方式必填／待審下壓保護；§2.1 使用者簽結與批次審閱。
+- 驗證方式: 讀檔確認開頭 `<!-- Playbook-Version: 11 -->` 與 `<!-- Playbook-Variant: online -->`；內容含「接手環境自檢」「驗證方式」「待審下壓」「使用者簽結」。
+- 下一個 agent 該做什麼: 無（純憲法升級；若接手請依 §0 做 hooksPath 自檢）
+- 地雷警告: 無
 ### 2026-09-12 11:17 [build] 使用工具: Claude Opus 5 (Cursor)
 
 - 完成了什麼: 使用者裁示 A2（**明確保留 B2 AppDir/**）：`git filter-repo` 僅移除 `bin/VoltMatch*.AppImage`／`bin/*.exe`；AppDir/ 342 檔仍在版控。`.git` 95M→13M。
